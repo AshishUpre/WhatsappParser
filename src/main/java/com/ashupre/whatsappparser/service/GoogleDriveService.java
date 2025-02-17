@@ -35,7 +35,7 @@ public class GoogleDriveService {
                 .execute();
 
         // here we are getting both the filename and id of the file from uploadedFile
-        return "File uploaded: " + uploadedFile.getName() + " (ID: " + uploadedFile.getId() + ")";
+        return uploadedFile.getName() + "(((ID: " + uploadedFile.getId() + ")))";
     }
 
     // Retrieve all files from a specified folder

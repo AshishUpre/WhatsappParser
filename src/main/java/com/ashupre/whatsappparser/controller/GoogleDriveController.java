@@ -44,9 +44,9 @@ public class GoogleDriveController {
             }
 
             // Upload file to Google Drive
-            String fileId = googleDriveService.uploadFile(convFile.getAbsolutePath());
-            System.out.println("fileId: " + fileId);
-            userService.addFile(userId, fileId);
+            String fileNameId = googleDriveService.uploadFile(convFile.getAbsolutePath());
+            System.out.println("fileNameId: " + fileNameId);
+            userService.addFile(userId, fileNameId);
 
             return "File uploaded successfully";
         } catch (IOException e) {

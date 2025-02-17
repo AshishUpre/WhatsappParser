@@ -35,7 +35,7 @@ public class UserService {
 
     @Transactional
     public User addFile(String userId, String fileId) {
-        System.out.println("\n in add filereceived file id: " + fileId);
+        System.out.println("\n in add file received file id: " + fileId);
         System.out.println("user id: " + userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
 
