@@ -1,22 +1,17 @@
-//package com.ashupre.whatsappparser.model;
-//
-//import jakarta.persistence.*;
-//import lombok.*;
-//
-//import java.time.LocalDateTime;
-//
-//@Entity
-//@Data
-//@NoArgsConstructor
-//@AllArgsConstructor
-//@Builder
-//@Table(name = "chats")
-//public class Chat {
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    private Long id;
-//
-//    private String sender;
-//    private String message;
-//    private LocalDateTime timestamp;
-//}
+package com.ashupre.whatsappparser.model;
+
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
+
+@Document(collection = "chats")
+@Data
+public class Chat {
+    @Id
+    private Long id;
+    private String sender;
+    private String message;
+    private LocalDateTime timestamp;
+}

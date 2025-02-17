@@ -1,5 +1,6 @@
 package com.ashupre.whatsappparser.controller;
 
+import com.ashupre.whatsappparser.model.LoginRequest;
 import com.ashupre.whatsappparser.model.User;
 import com.ashupre.whatsappparser.model.UserDTO;
 import com.ashupre.whatsappparser.security.AESUtil;
@@ -44,20 +45,52 @@ public class UserController {
 
     // Login user
     @PostMapping("/login")
-    public ResponseEntity<User> loginUser(HttpServletRequest request) {
+    public ResponseEntity<User> loginUser(@RequestBody LoginRequest loginRequest, HttpServletRequest request,
+            HttpServletResponse response) {
+        System.out.println("got login request body: " + loginRequest);
         String email = CookieUtil.getDecryptedCookieValue(request, "email", aesUtil); // Decrypt and get the actual values
         String userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
         System.out.println("got email: " + email);
         System.out.println("got userId: " + userId);
+        User savedUser;
+        boolean authenticated;
 
-        User savedUser = userService.getUserByEmail(email);
-        boolean authenticated = userService.authenticateUser(savedUser.getId(), savedUser.getPassword());
+        // this condition means the cookie was cleared previously on prev logout
+        if (email.equals("") && userId.equals("")) {
+            savedUser = userService.getUserByEmail(loginRequest.getEmail());
+            authenticated = userService.authenticateUser(savedUser.getId(), loginRequest.getPassword());
+        } else {
+            savedUser = userService.getUserByEmail(email);
+            authenticated = userService.authenticateUser(savedUser.getId(), savedUser.getPassword());
+        }
+
+        Cookie emailCookie = CookieUtil.createSecureHttpCookieWithEncryptedValues("email", savedUser.getEmail(),
+                aesUtil);
+        Cookie idCookie = CookieUtil.createSecureHttpCookieWithEncryptedValues("userId", savedUser.getId(),
+                aesUtil);
+
         if (authenticated) {
+            response.addCookie(emailCookie);
+            response.addCookie(idCookie);
             return ResponseEntity.ok(savedUser);
         } else {
             return ResponseEntity.status(401).header("Error",
                     "Invalid credentials").body(null);
         }
+    }
+
+    // logout user - need this to clear the cookie in the browser
+    @PostMapping("/logout")
+    public ResponseEntity<String> logoutUser(HttpServletRequest request, HttpServletResponse response) {
+//        String email = CookieUtil.getDecryptedCookieValue(request, "email", aesUtil); // Decrypt and get the actual values
+//        String userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
+//        System.out.println("got email: " + email);
+//        System.out.println("got userId: " + userId);
+        Cookie userIdCookie = CookieUtil.createSecureHttpCookieWithEncryptedValues("userId", "", aesUtil);
+        Cookie emailCookie = CookieUtil.createSecureHttpCookieWithEncryptedValues("email", "", aesUtil);
+        response.addCookie(userIdCookie);
+        response.addCookie(emailCookie);
+        return ResponseEntity.ok("Logged out successfully");
     }
 
     // Update profile picture
