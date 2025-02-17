@@ -1,0 +1,6 @@
+###
+GET http://localhost:8080/api/files/api/drive/files/{{gdriveFolderId}}
+
+###
+GET http://localhost:8080/api/users/files/{{myEmail}}
+
