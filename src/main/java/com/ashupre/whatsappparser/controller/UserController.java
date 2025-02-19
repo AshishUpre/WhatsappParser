@@ -119,7 +119,7 @@ public class UserController {
     }
 
     @GetMapping("/files")
-    public ResponseEntity<List<String>> getAllFilesOfUser(HttpServletRequest request) {
+    public ResponseEntity<List<User.FileMetadata>> getAllFilesOfUser(HttpServletRequest request) {
         String userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
         return ResponseEntity.ok(userService.getAllFilesOfUser(userId));
     }

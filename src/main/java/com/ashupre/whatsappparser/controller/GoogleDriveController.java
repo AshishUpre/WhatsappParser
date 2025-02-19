@@ -46,10 +46,11 @@ public class GoogleDriveController {
             }
 
             // Upload file to Google Drive
-            String []fileNameId = googleDriveService.uploadFile(convFile.getAbsolutePath());
+            String [] fileNameDriveId = googleDriveService.uploadFile(convFile.getAbsolutePath());
 
-            System.out.println("fileNameId: " + fileNameId);
-            userService.addFile(userId, fileNameId);
+            System.out.println("filename : " + fileNameDriveId[0]);
+            System.out.println("fileId : " + fileNameDriveId[1]);
+            userService.addFile(userId, fileNameDriveId[0], fileNameDriveId[1]);
 
             // todo: put the chats into table from the file ============================================================
             chatsService.addChatsFromFile(file);
