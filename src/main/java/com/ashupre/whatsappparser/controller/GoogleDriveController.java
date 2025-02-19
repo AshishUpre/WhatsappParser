@@ -1,6 +1,7 @@
 package com.ashupre.whatsappparser.controller;
 
 import com.ashupre.whatsappparser.security.AESUtil;
+import com.ashupre.whatsappparser.service.ChatsService;
 import com.ashupre.whatsappparser.service.GoogleDriveService;
 import com.ashupre.whatsappparser.service.UserService;
 import com.ashupre.whatsappparser.util.CookieUtil;
@@ -23,13 +24,14 @@ public class GoogleDriveController {
 
     private final UserService userService;
 
+    private final ChatsService chatsService;
+
     private final AESUtil aesUtil;
 
     @PostMapping("/upload")
     public String uploadFile(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         try {
             System.out.println("Received file: " + file.getOriginalFilename());
-
             String email = CookieUtil.getDecryptedCookieValue(request, "email", aesUtil);
             String userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
 
@@ -44,10 +46,13 @@ public class GoogleDriveController {
             }
 
             // Upload file to Google Drive
-            String fileNameId = googleDriveService.uploadFile(convFile.getAbsolutePath());
+            String []fileNameId = googleDriveService.uploadFile(convFile.getAbsolutePath());
+
             System.out.println("fileNameId: " + fileNameId);
             userService.addFile(userId, fileNameId);
 
+            // todo: put the chats into table from the file ============================================================
+            chatsService.addChatsFromFile(file);
             return "File uploaded successfully";
         } catch (IOException e) {
             return "Error uploading file: " + e.getMessage();

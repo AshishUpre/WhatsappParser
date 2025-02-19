@@ -18,13 +18,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GoogleDriveService {
 
-    @Autowired
-    private Drive drive;
+    private final Drive drive;
 
     private final String folderId;
 
     // Upload file to Google Drive folder
-    public String uploadFile(String filePath) throws IOException {
+    public String[] uploadFile(String filePath) throws IOException {
         File fileMetadata = new File();
         fileMetadata.setName(Paths.get(filePath).getFileName().toString());
         fileMetadata.setParents(Collections.singletonList(folderId)); // Target folder ID
@@ -33,12 +32,9 @@ public class GoogleDriveService {
         File uploadedFile = drive.files().create(fileMetadata, mediaContent)
                 .setFields("id, name, parents")
                 .execute();
-
-        // here we are getting both the filename and id of the file from uploadedFile
-        return uploadedFile.getName() + "(((ID: " + uploadedFile.getId() + ")))";
+        return new String[] {uploadedFile.getName(), uploadedFile.getId()};
     }
 
-    // Retrieve all files from a specified folder
     public List<String> getAllFilesInFolder(String folderId) throws IOException {
         List<String> fileNames = new ArrayList<>();
 

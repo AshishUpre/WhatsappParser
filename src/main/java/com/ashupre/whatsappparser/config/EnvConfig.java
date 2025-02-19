@@ -25,13 +25,11 @@ public class EnvConfig {
      */
     @Bean
     public String secretKey() {
-        String envKey = dotenv.get("AES_SECRET_KEY");
-        return envKey;
+        return dotenv.get("AES_SECRET_KEY");
     }
 
     @Bean
     public String iv() {
-        String envIv = dotenv.get("AES_IV");
-        return envIv;
+        return dotenv.get("AES_IV");
     }
 }

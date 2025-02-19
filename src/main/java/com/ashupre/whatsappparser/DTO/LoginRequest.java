@@ -1,4 +1,4 @@
-package com.ashupre.whatsappparser.model;
+package com.ashupre.whatsappparser.DTO;
 
 import lombok.Data;
 
