@@ -34,23 +34,25 @@ public class UserService {
     }
 
     @Transactional
-    public User addFile(String userId, String fileId) {
-        System.out.println("\n in add file received file id: " + fileId);
+    public User addFile(String userId, String fileName, String driveId) {
+        System.out.println("\n in add file received file id: " + driveId);
         System.out.println("user id: " + userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        if (user.getFileIds() == null) {
-            List<String> fileIds = new ArrayList<>();
-            fileIds.add(fileId);
-            user.setFileIds(fileIds);
-        } else if (!user.getFileIds().contains(fileId)) {
-            user.getFileIds().add(fileId);
+        if (user.getFiles() == null) {
+            user.setFiles(new ArrayList<>());
+        }
+
+        if (!user.hasFileDriveId(driveId)) {
+            List<User.FileMetadata> files = user.getFiles();
+            files.add(new User.FileMetadata(fileName, driveId));
+            user.setFiles(files);
         }
 
         return userRepository.save(user);
     }
 
-    public List<String> getAllFilesOfUser(String userId) {
+    public List<User.FileMetadata> getAllFilesOfUser(String userId) {
         System.out.println("reached user service, get all files of user");
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
 
@@ -58,7 +60,7 @@ public class UserService {
         if (user == null) {
             throw new RuntimeException("User not found");
         }
-        return user.getFileIds();
+        return user.getFiles();
     }
 
     // Update an existing user's profile picture
@@ -116,10 +118,7 @@ public class UserService {
 
     public boolean authenticateUser(String userId, String password) {
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
-        if (user != null && user.getPassword().equals(password)) {
-            return true;
-        }
-        return false;
+        return user != null && user.getPassword().equals(password);
     }
 
     public String authenticateUserAndGetToken(String email, String password) {

@@ -17,11 +17,11 @@ public class EnvConfig {
     /**
      * key and iv must be present in .env, generate using
      *
-     * # Generate a 256-bit (32-byte) key
-     * openssl rand -base64 32
+     * -> Generate a 256-bit (32-byte) key
+     * $ openssl rand -base64 32
      *
-     * # Generate a 128-bit (16-byte) IV
-     * openssl rand -base64 16
+     * -> Generate a 128-bit (16-byte) IV
+     * $ openssl rand -base64 16
      */
     @Bean
     public String secretKey() {
