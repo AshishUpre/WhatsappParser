@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 public class Chat {
     @Id
     private Long id;
+    private Long userId;
     private String sender;
     private String message;
+    private String fileNameId;
     private LocalDateTime timestamp;
 }

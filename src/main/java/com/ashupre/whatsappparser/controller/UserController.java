@@ -1,8 +1,8 @@
 package com.ashupre.whatsappparser.controller;
 
-import com.ashupre.whatsappparser.model.LoginRequest;
+import com.ashupre.whatsappparser.DTO.LoginRequest;
 import com.ashupre.whatsappparser.model.User;
-import com.ashupre.whatsappparser.model.UserDTO;
+import com.ashupre.whatsappparser.DTO.UserDTO;
 import com.ashupre.whatsappparser.security.AESUtil;
 import com.ashupre.whatsappparser.service.UserService;
 import com.ashupre.whatsappparser.util.CookieUtil;
@@ -48,19 +48,30 @@ public class UserController {
     public ResponseEntity<User> loginUser(@RequestBody LoginRequest loginRequest, HttpServletRequest request,
             HttpServletResponse response) {
         System.out.println("got login request body: " + loginRequest);
-        String email = CookieUtil.getDecryptedCookieValue(request, "email", aesUtil); // Decrypt and get the actual values
-        String userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
+        String email = "";
+        String userId = "";
+
+        if (CookieUtil.checkCookiePresent(request, "email")) {
+            email = CookieUtil.getDecryptedCookieValue(request, "email", aesUtil); // Decrypt and get the actual values
+        }
+
+        if (CookieUtil.checkCookiePresent(request, "userId")) {
+            userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
+        }
+
         System.out.println("got email: " + email);
         System.out.println("got userId: " + userId);
+
         User savedUser;
         boolean authenticated;
 
         // this condition means the cookie was cleared previously on prev logout
+        // or it may mean cookie doesn't exist atall
         if (email.equals("") && userId.equals("")) {
             savedUser = userService.getUserByEmail(loginRequest.getEmail());
             authenticated = userService.authenticateUser(savedUser.getId(), loginRequest.getPassword());
         } else {
-            savedUser = userService.getUserByEmail(email);
+            savedUser = userService.getUserByEmail(loginRequest.getEmail());
             authenticated = userService.authenticateUser(savedUser.getId(), savedUser.getPassword());
         }
 

@@ -5,15 +5,13 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
- * This class provides method to
+ * provides methods for cookies related stuff
  */
 public class CookieUtil {
 
-    /**
-     *
-     */
     public static Cookie createSecureHttpCookieWithEncryptedValues(String name, String value, AESUtil aesUtil) {
         Cookie cookie = new Cookie(name, aesUtil.encrypt(value));
         cookie.setHttpOnly(true);
@@ -33,4 +31,13 @@ public class CookieUtil {
 
         return aesUtil.decrypt(cookie.getValue());
     }
+
+    public static boolean checkCookiePresent(HttpServletRequest request, String cookieName) {
+        Optional<Cookie> cookie = Arrays.stream(request.getCookies())
+                .filter(c -> c.getName().equals(cookieName))
+                .findFirst();
+
+        return cookie.isPresent();
+    }
+
 }
