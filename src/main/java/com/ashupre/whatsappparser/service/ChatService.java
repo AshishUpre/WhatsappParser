@@ -1,15 +1,20 @@
 package com.ashupre.whatsappparser.service;
 
+import com.ashupre.whatsappparser.dto.ChatCursor;
+import com.ashupre.whatsappparser.dto.ChatResponsePaginated;
 import com.ashupre.whatsappparser.model.Chat;
 import com.ashupre.whatsappparser.model.ChatEntry;
 import com.ashupre.whatsappparser.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.mongodb.core.query.Query;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -41,18 +46,17 @@ public class ChatService {
      *     );
      */
 
-
     public ResponseEntity<String> addChatsFromFile(MultipartFile file, String userId, String fileDriveId) {
         List<ChatEntry> logEntries = new ArrayList<>();
 
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
             String name = null;
             String timestamp = null;
             StringBuilder messageBuilder = new StringBuilder();
 
-            Pattern messagePattern = Pattern.compile("^(\\d{2}/\\d{2}/\\d{2}, \\d{1,2}:\\d{2} [ap]m) [-] (.*?): (.*)$");
+            Pattern messagePattern = Pattern
+                    .compile("^(\\d{2}/\\d{2}/\\d{2}, \\d{1,2}:\\d{2} [ap]m) [-] (.*?): (.*)$");
 
             while ((line = reader.readLine()) != null) {
                 Matcher matcher = messagePattern.matcher(line);
@@ -60,8 +64,9 @@ public class ChatService {
                 // regex match => new message
                 if (matcher.matches()) {
                     // save prev message before processing new one
-                    if (timestamp != null && name != null && messageBuilder.length() > 0) {
-                        logEntries.add(new ChatEntry(LocalDateTime.parse(timestamp, inputFormatter), name, messageBuilder.toString()));
+                    if (timestamp != null && name != null && !messageBuilder.isEmpty()) {
+                        logEntries.add(new ChatEntry(LocalDateTime.parse(timestamp, inputFormatter),
+                                name, messageBuilder.toString()));
                     }
 
                     timestamp = matcher.group(1);
@@ -71,7 +76,7 @@ public class ChatService {
                     messageBuilder.append(matcher.group(3));
                 } else {
                     // regex not matching => this is not a new message but continuation of prev one
-                    if (messageBuilder.length() > 0) {
+                    if (!messageBuilder.isEmpty()) {
                         messageBuilder.append("\n");  // Preserve new lines for readability
                     }
                     messageBuilder.append(line);
@@ -79,11 +84,11 @@ public class ChatService {
             }
 
             // last message
-            if (timestamp != null && name != null && messageBuilder.length() > 0) {
-                logEntries.add(new ChatEntry(LocalDateTime.parse(timestamp, inputFormatter), name, messageBuilder.toString().trim()));
+            if (timestamp != null && name != null && !messageBuilder.isEmpty()) {
+                logEntries.add(new ChatEntry(LocalDateTime.parse(timestamp, inputFormatter),
+                        name, messageBuilder.toString().trim()));
             }
 
-            reader.close();
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Failed to read file: " + e.getMessage());
         }
@@ -117,8 +122,37 @@ public class ChatService {
         mongoTemplate.bulkOps(BulkOperations.BulkMode.ORDERED, Chat.class)
                 .insert(chatList)
                 .execute();
-        chatRepository.saveAll(chatList);
         return CompletableFuture.completedFuture(null);
+    }
+
+    public ChatResponsePaginated getPaginatedChats (String userId, String fileId, ChatCursor prevCursor) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("userId").is(userId));
+        query.addCriteria(Criteria.where("fileDriveId").is(fileId));
+        System.out.println("reached here in getPaginatedChats");
+
+        if (prevCursor != null) {
+            System.out.println("prev cursor not null");
+            Criteria paginationCriteria = new Criteria().orOperator(
+                    Criteria.where("timestamp").lt(prevCursor.getTimestamp()),
+                    Criteria.where("timestamp").is(prevCursor.getTimestamp()).and("_id").lt(prevCursor.getId())
+            );
+
+            query.addCriteria(paginationCriteria);
+        }
+
+        query.with(Sort.by(Sort.Order.desc("timestamp"), Sort.Order.desc("_id")));
+        query.limit(100);
+
+        List<Chat> chatList = mongoTemplate.find(query, Chat.class);
+        ChatCursor cursor = null;
+
+        if (!chatList.isEmpty()) {
+            Chat lastChat = chatList.get(chatList.size() - 1);
+            cursor = new ChatCursor(lastChat.getTimestamp(), lastChat.getId());
+        }
+
+        return new ChatResponsePaginated(chatList, cursor);
     }
 
 

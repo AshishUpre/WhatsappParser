@@ -1,8 +1,8 @@
 package com.ashupre.whatsappparser.controller;
 
-import com.ashupre.whatsappparser.DTO.LoginRequest;
+import com.ashupre.whatsappparser.dto.LoginRequest;
 import com.ashupre.whatsappparser.model.User;
-import com.ashupre.whatsappparser.DTO.UserDTO;
+import com.ashupre.whatsappparser.dto.UserDTO;
 import com.ashupre.whatsappparser.security.AESUtil;
 import com.ashupre.whatsappparser.service.UserService;
 import com.ashupre.whatsappparser.util.CookieUtil;
