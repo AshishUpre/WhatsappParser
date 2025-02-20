@@ -1,4 +1,4 @@
-package com.ashupre.whatsappparser.DTO;
+package com.ashupre.whatsappparser.dto;
 
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;

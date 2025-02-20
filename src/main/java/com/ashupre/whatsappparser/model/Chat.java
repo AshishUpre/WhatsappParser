@@ -24,6 +24,8 @@ public class Chat {
     private String fileDbId;
     private String fileDriveId;
 
+    // NOTE: this index creation only happens when the application starts
+    // => {if you delete chats collection and re-upload files, index will not be created}
     @Indexed(direction = IndexDirection.DESCENDING)
     private Instant timestamp;
 
