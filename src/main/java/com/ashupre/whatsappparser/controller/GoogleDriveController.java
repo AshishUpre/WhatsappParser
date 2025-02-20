@@ -1,7 +1,8 @@
 package com.ashupre.whatsappparser.controller;
 
+import com.ashupre.whatsappparser.model.DriveFileMetadata;
 import com.ashupre.whatsappparser.security.AESUtil;
-import com.ashupre.whatsappparser.service.ChatsService;
+import com.ashupre.whatsappparser.service.ChatService;
 import com.ashupre.whatsappparser.service.GoogleDriveService;
 import com.ashupre.whatsappparser.service.UserService;
 import com.ashupre.whatsappparser.util.CookieUtil;
@@ -24,7 +25,7 @@ public class GoogleDriveController {
 
     private final UserService userService;
 
-    private final ChatsService chatsService;
+    private final ChatService chatService;
 
     private final AESUtil aesUtil;
 
@@ -39,21 +40,22 @@ public class GoogleDriveController {
             System.out.println("got userId: " + userId);
 
             // file handling
-            // /tmp/filename absolute path for the file (get by convFile.getAbsolutePath())
+            // /tmp/filename absolute path for the file (get by convFile.getAbsolutePath())r
             File convFile = new File(System.getProperty("java.io.tmpdir") + "/" + file.getOriginalFilename());
             try (FileOutputStream fos = new FileOutputStream(convFile)) {
                 fos.write(file.getBytes());
             }
 
             // Upload file to Google Drive
-            String [] fileNameDriveId = googleDriveService.uploadFile(convFile.getAbsolutePath());
+            DriveFileMetadata metadata = googleDriveService.uploadFile(convFile.getAbsolutePath());
 
-            System.out.println("filename : " + fileNameDriveId[0]);
-            System.out.println("fileId : " + fileNameDriveId[1]);
-            userService.addFile(userId, fileNameDriveId[0], fileNameDriveId[1]);
+            System.out.println("filename : " + metadata.getFileName());
+            System.out.println("fileId : " + metadata.getDriveId());
 
-            // todo: put the chats into table from the file ============================================================
-            chatsService.addChatsFromFile(file);
+            // todo: store in DB first
+            userService.addFile(userId, metadata.getFileName(), metadata.getDriveId());
+
+            chatService.addChatsFromFile(file, userId, metadata.getDriveId());
             return "File uploaded successfully";
         } catch (IOException e) {
             return "Error uploading file: " + e.getMessage();

@@ -1,30 +1,48 @@
 package com.ashupre.whatsappparser.service;
 
+import com.ashupre.whatsappparser.model.Chat;
 import com.ashupre.whatsappparser.model.ChatEntry;
+import com.ashupre.whatsappparser.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.BulkOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
-public class ChatsService {
+public class ChatService {
 
     private final DateTimeFormatter inputFormatter;
     private final DateTimeFormatter outputFormatter;
+    private final ChatRepository chatRepository;
+    private final MongoTemplate mongoTemplate;
+    /**
+     * No need to create a mongoTemplate, springboot will automatically create a mongoTemplate for us using
+     * the uri given in application.properties, we simply inject it
+     *
+     *  = new MongoTemplate(
+     *             new SimpleMongoClientDatabaseFactory(MongoClients.create("mongodb://localhost:27017"),
+     *                     "whatsapp_parser")
+     *     );
+     */
 
-    public ResponseEntity<String> addChatsFromFile(MultipartFile file) {
+
+    public ResponseEntity<String> addChatsFromFile(MultipartFile file, String userId, String fileDriveId) {
         List<ChatEntry> logEntries = new ArrayList<>();
 
         try {
@@ -69,24 +87,38 @@ public class ChatsService {
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Failed to read file: " + e.getMessage());
         }
-        writeLogsToDB(logEntries, "log.txt");
+
+        writeLogsToDB(logEntries, "log.txt", userId, fileDriveId);
         return ResponseEntity.ok("added successfully");
     }
 
 
-    public void writeLogsToDB(List<ChatEntry> logEntries, String filePath) {
-        try (FileWriter writer = new FileWriter(filePath)) {
-            for (ChatEntry entry : logEntries) {
-                String logMessage = "|timestamp : |" + outputFormatter.format(entry.timestamp()) +
-                        "| name: " + entry.name().replaceAll("^\\s+", "⟶") +
-                        "| message: " + entry.message().replaceAll("^\\s+", "⟶") + "|\n";
-                writer.write(logMessage);
-                writer.write(" ========================== \n\n");
-            }
-            System.out.println("logs written to " + filePath);
-        } catch (IOException e) {
-            System.err.println("Error writing to file: " + e.getMessage());
+    public void writeLogsToDB(List<ChatEntry> logEntries, String filePath, String userId, String fileDriveId) {
+        List<Chat> chatList = new ArrayList<>();
+        for (ChatEntry entry : logEntries) {
+            Chat chat = new Chat();
+            chat.setMessage(entry.message());
+            chat.setTimestamp(Chat.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")));
+            chat.setSender(entry.name());
+            chat.setUserId(userId);
+            chat.setFileDriveId(fileDriveId);
+//                chat.setFileName();
+
+            chatList.add(chat);
         }
+        System.out.println("logs written to " + filePath);
+        if (!chatList.isEmpty()) {
+            saveChatsToDbAsync(chatList);
+        }
+    }
+
+    @Async
+    protected CompletableFuture<Void> saveChatsToDbAsync(List<Chat> chatList) {
+        mongoTemplate.bulkOps(BulkOperations.BulkMode.ORDERED, Chat.class)
+                .insert(chatList)
+                .execute();
+        chatRepository.saveAll(chatList);
+        return CompletableFuture.completedFuture(null);
     }
 
 

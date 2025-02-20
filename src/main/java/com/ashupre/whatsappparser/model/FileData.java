@@ -11,8 +11,7 @@ public class FileData {
     private String id;
     private String fileName;
     private String gdriveId;
-    private String fileId;
-    private String uploadedByUserId;
+    private String userId;
     private long size;
     private String uploadTime;
 }

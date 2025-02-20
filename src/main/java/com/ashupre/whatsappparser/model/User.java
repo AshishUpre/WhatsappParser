@@ -23,6 +23,7 @@ public class User {
     public static class FileMetadata {
         private String fileName;
         private String driveId; // References uploaded files
+//        private String fileId;
     }
 
     public boolean hasFileDriveId(String driveId) {
