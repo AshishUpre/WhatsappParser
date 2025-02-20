@@ -1,6 +1,8 @@
 package com.ashupre.whatsappparser.service;
 
+import com.ashupre.whatsappparser.model.DriveFileMetadata;
 import com.google.api.client.http.FileContent;
+import com.google.api.client.util.DateTime;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -23,7 +25,7 @@ public class GoogleDriveService {
     private final String folderId;
 
     // Upload file to Google Drive folder
-    public String[] uploadFile(String filePath) throws IOException {
+    public DriveFileMetadata uploadFile(String filePath) throws IOException {
         File fileMetadata = new File();
         fileMetadata.setName(Paths.get(filePath).getFileName().toString());
         fileMetadata.setParents(Collections.singletonList(folderId)); // Target folder ID
@@ -32,7 +34,10 @@ public class GoogleDriveService {
         File uploadedFile = drive.files().create(fileMetadata, mediaContent)
                 .setFields("id, name, parents")
                 .execute();
-        return new String[] {uploadedFile.getName(), uploadedFile.getId()};
+        DateTime createdTime = uploadedFile.getCreatedTime();
+        // todo: make it send creation time and size also
+        return new DriveFileMetadata(uploadedFile.getId(), uploadedFile.getName(), uploadedFile.getSize(),
+                uploadedFile.getCreatedTime());
     }
 
     public List<String> getAllFilesInFolder(String folderId) throws IOException {

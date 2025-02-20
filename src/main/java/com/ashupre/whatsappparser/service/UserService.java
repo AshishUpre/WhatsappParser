@@ -34,7 +34,7 @@ public class UserService {
     }
 
     @Transactional
-    public User addFile(String userId, String fileName, String driveId) {
+    public void addFile(String userId, String fileName, String driveId) {
         System.out.println("\n in add file received file id: " + driveId);
         System.out.println("user id: " + userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -49,7 +49,7 @@ public class UserService {
             user.setFiles(files);
         }
 
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     public List<User.FileMetadata> getAllFilesOfUser(String userId) {
@@ -64,6 +64,7 @@ public class UserService {
     }
 
     // Update an existing user's profile picture
+    @Transactional
     public User updateProfilePic(String userId, MultipartFile file) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -99,6 +100,7 @@ public class UserService {
     }
 
     // Delete a user by ID
+    @Transactional
     public void deleteUserById(String userId) {
         if (!userRepository.existsById(userId)) {
             throw new UserNotFoundException("User does not exist");
