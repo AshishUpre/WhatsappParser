@@ -7,6 +7,9 @@ import com.ashupre.whatsappparser.service.ChatService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Arrays;
+import java.util.Base64;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class ChatController {
         if (cursor == null || cursor.isEmpty()) {
             prevCursor = null;
         } else {
+            cursor = new String(Base64.getUrlDecoder().decode(cursor));
             cursor = aesUtil.decrypt(cursor);
             System.out.println("cursor after decryption : " + cursor);
             prevCursor = mapper.readValue(cursor, ChatCursor.class);
@@ -37,7 +41,16 @@ public class ChatController {
 
         ChatResponsePaginated response = chatService.getPaginatedChats(userId, fileDriveId, prevCursor);
         System.out.println("cursor before enc : " + response.getCursor());
+
+        // encrypt the cursor then convert to Base64 and send
+        // WHY? because on encryption, there is a chance of characters like +, /, =, etc.
+        // if / is there it will be another route and wont get routed to this route
+        // but Base64 encoding doesnt have most special characters, but it has + and /
+        // hence we make use of URL safe Base64 encoding that converts + and / to - and _
+
         response.setCursor(aesUtil.encrypt(response.getCursor()));
+        System.out.println("Base 64 encoded cursor ============ : " + Arrays.toString(Base64.getUrlEncoder().encode(response.getCursor().getBytes())));
+        response.setCursor(Base64.getUrlEncoder().encodeToString(response.getCursor().getBytes()));
         System.out.println("sending cursor as : " + response.getCursor());
         return response;
     }

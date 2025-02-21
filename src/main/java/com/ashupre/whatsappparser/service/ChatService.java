@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -104,19 +103,20 @@ public class ChatService {
 
 
     public void writeLogsToDB(List<ChatEntry> logEntries, String userId, String fileDriveId) {
-        List<Chat> chatList = new ArrayList<>();
-        for (ChatEntry entry : logEntries) {
-            Chat chat = new Chat();
-            chat.setMessage(entry.message());
-            // convert timestamp to utc before storing in db
-            chat.setTimestamp(Chat.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")));
-            chat.setSender(entry.name());
-            chat.setUserId(userId);
-            chat.setFileDriveId(fileDriveId);
-//                chat.setFileName();
+        List<Chat> chatList = logEntries.stream().map(
+                entry -> {
+                    Chat chat = new Chat();
+                    chat.setMessage(entry.message());
+                    // convert timestamp to utc before storing in db
+                    chat.setTimestamp(Chat.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")));
+                    chat.setSender(entry.name());
+                    chat.setUserId(userId);
+                    chat.setFileDriveId(fileDriveId);
+                    // chat.setFileName();
+                    return chat;
+                }
+        ).toList();
 
-            chatList.add(chat);
-        }
         if (!chatList.isEmpty()) {
             saveChatsToDbAsync(chatList);
         }
@@ -169,7 +169,7 @@ public class ChatService {
     }
 
     private List<ChatDTO> getChatDTOList(List<Chat> chatList) {
-        return chatList.isEmpty() ? null : chatList.stream()
+        return chatList.isEmpty() ? List.of() : chatList.stream()
                 .map(
                         chat -> new ChatDTO(
                                 chat.getSender(),
