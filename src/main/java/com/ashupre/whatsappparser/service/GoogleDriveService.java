@@ -34,8 +34,6 @@ public class GoogleDriveService {
         File uploadedFile = drive.files().create(fileMetadata, mediaContent)
                 .setFields("id, name, parents")
                 .execute();
-        DateTime createdTime = uploadedFile.getCreatedTime();
-        // todo: make it send creation time and size also
         return new DriveFileMetadata(uploadedFile.getId(), uploadedFile.getName(), uploadedFile.getSize(),
                 uploadedFile.getCreatedTime());
     }
