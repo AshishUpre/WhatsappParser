@@ -1,10 +1,12 @@
 package com.ashupre.whatsappparser.service;
 
-import com.ashupre.whatsappparser.dto.ChatCursor;
+import com.ashupre.whatsappparser.model.ChatCursor;
 import com.ashupre.whatsappparser.dto.ChatResponsePaginated;
 import com.ashupre.whatsappparser.model.Chat;
 import com.ashupre.whatsappparser.model.ChatEntry;
 import com.ashupre.whatsappparser.repository.ChatRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.BulkOperations;
@@ -36,6 +38,7 @@ public class ChatService {
     private final DateTimeFormatter outputFormatter;
     private final ChatRepository chatRepository;
     private final MongoTemplate mongoTemplate;
+    private final ObjectMapper mapper;
     /**
      * No need to create a mongoTemplate, springboot will automatically create a mongoTemplate for us using
      * the uri given in application.properties, we simply inject it
@@ -146,13 +149,19 @@ public class ChatService {
 
         List<Chat> chatList = mongoTemplate.find(query, Chat.class);
         ChatCursor cursor = null;
-
         if (!chatList.isEmpty()) {
             Chat lastChat = chatList.get(chatList.size() - 1);
             cursor = new ChatCursor(lastChat.getTimestamp(), lastChat.getId());
         }
 
-        return new ChatResponsePaginated(chatList, cursor);
+        String cursorJSON;
+        try {
+            cursorJSON = mapper.writeValueAsString(cursor);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("JSON exception " + e.getMessage());
+        }
+
+        return new ChatResponsePaginated(chatList, cursorJSON);
     }
 
 

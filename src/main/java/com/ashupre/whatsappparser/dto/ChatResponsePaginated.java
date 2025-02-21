@@ -11,5 +11,5 @@ import java.util.List;
 public class ChatResponsePaginated {
 
     private List<Chat> chatList;
-    private ChatCursor prevCursor;
+    private String cursor;
 }

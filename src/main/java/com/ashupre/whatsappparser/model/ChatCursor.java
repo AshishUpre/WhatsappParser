@@ -1,4 +1,4 @@
-package com.ashupre.whatsappparser.dto;
+package com.ashupre.whatsappparser.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

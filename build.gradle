@@ -46,6 +46,12 @@ dependencies {
     // Dotenv
     implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 
+    // Jackson for JSON stuff, Jackson  doesnt support Instant by default (we are converting cursor to JSON)
+    // so we need the second dependency
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+
 }
 
 tasks.named('test') {
