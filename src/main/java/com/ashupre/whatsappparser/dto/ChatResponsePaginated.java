@@ -10,6 +10,6 @@ import java.util.List;
 @AllArgsConstructor
 public class ChatResponsePaginated {
 
-    private List<Chat> chatList;
+    private List<ChatDTO> chatList;
     private String cursor;
 }

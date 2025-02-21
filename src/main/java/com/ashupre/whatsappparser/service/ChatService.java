@@ -1,5 +1,6 @@
 package com.ashupre.whatsappparser.service;
 
+import com.ashupre.whatsappparser.dto.ChatDTO;
 import com.ashupre.whatsappparser.model.ChatCursor;
 import com.ashupre.whatsappparser.dto.ChatResponsePaginated;
 import com.ashupre.whatsappparser.model.Chat;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -96,16 +98,17 @@ public class ChatService {
             return ResponseEntity.status(500).body("Failed to read file: " + e.getMessage());
         }
 
-        writeLogsToDB(logEntries, "log.txt", userId, fileDriveId);
+        writeLogsToDB(logEntries, userId, fileDriveId);
         return ResponseEntity.ok("added successfully");
     }
 
 
-    public void writeLogsToDB(List<ChatEntry> logEntries, String filePath, String userId, String fileDriveId) {
+    public void writeLogsToDB(List<ChatEntry> logEntries, String userId, String fileDriveId) {
         List<Chat> chatList = new ArrayList<>();
         for (ChatEntry entry : logEntries) {
             Chat chat = new Chat();
             chat.setMessage(entry.message());
+            // convert timestamp to utc before storing in db
             chat.setTimestamp(Chat.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")));
             chat.setSender(entry.name());
             chat.setUserId(userId);
@@ -114,7 +117,6 @@ public class ChatService {
 
             chatList.add(chat);
         }
-        System.out.println("logs written to " + filePath);
         if (!chatList.isEmpty()) {
             saveChatsToDbAsync(chatList);
         }
@@ -148,6 +150,8 @@ public class ChatService {
         query.limit(100);
 
         List<Chat> chatList = mongoTemplate.find(query, Chat.class);
+        List<ChatDTO> chatDTOList = getChatDTOList(chatList);
+
         ChatCursor cursor = null;
         if (!chatList.isEmpty()) {
             Chat lastChat = chatList.get(chatList.size() - 1);
@@ -161,8 +165,20 @@ public class ChatService {
             throw new RuntimeException("JSON exception " + e.getMessage());
         }
 
-        return new ChatResponsePaginated(chatList, cursorJSON);
+        return new ChatResponsePaginated(chatDTOList, cursorJSON);
     }
 
+    private List<ChatDTO> getChatDTOList(List<Chat> chatList) {
+        return chatList.isEmpty() ? null : chatList.stream()
+                .map(
+                        chat -> new ChatDTO(
+                                chat.getSender(),
+                                chat.getMessage(),
+                                // convert back to local after getting from DB, format as like in chat export text file
+                                Chat.utcToLocal(chat.getTimestamp(), ZoneId.of("Asia/Kolkata"))
+                                        .format(outputFormatter)
+                        )
+                ).toList();
+    }
 
 }

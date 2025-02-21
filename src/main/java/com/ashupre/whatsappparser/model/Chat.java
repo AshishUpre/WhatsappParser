@@ -35,7 +35,7 @@ public class Chat {
     }
 
     // convert to local after getting back
-    public LocalDateTime utcToLocal(Instant timestamp, ZoneId zoneId) {
+    public static LocalDateTime utcToLocal(Instant timestamp, ZoneId zoneId) {
         return timestamp.atZone(zoneId).toLocalDateTime();
     }
 }
