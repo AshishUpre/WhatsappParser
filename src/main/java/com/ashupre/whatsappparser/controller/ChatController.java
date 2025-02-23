@@ -8,7 +8,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Arrays;
 import java.util.Base64;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +20,7 @@ public class ChatController {
 
     private final AESUtil aesUtil;
 
-    private final ObjectMapper mapper;
+    private final ObjectMapper jacksonMapper;
 
     // todo : fine tune this and what it calls
     @GetMapping("/{fileDriveId}/{userId}/cursor={cursor}")
@@ -36,7 +35,7 @@ public class ChatController {
             cursor = new String(Base64.getUrlDecoder().decode(cursor));
             cursor = aesUtil.decrypt(cursor);
             System.out.println("cursor after decryption : " + cursor);
-            prevCursor = mapper.readValue(cursor, ChatCursor.class);
+            prevCursor = jacksonMapper.readValue(cursor, ChatCursor.class);
         }
 
         ChatResponsePaginated response = chatService.getPaginatedChats(userId, fileDriveId, prevCursor);
@@ -49,7 +48,6 @@ public class ChatController {
         // hence we make use of URL safe Base64 encoding that converts + and / to - and _
 
         response.setCursor(aesUtil.encrypt(response.getCursor()));
-        System.out.println("Base 64 encoded cursor ============ : " + Arrays.toString(Base64.getUrlEncoder().encode(response.getCursor().getBytes())));
         response.setCursor(Base64.getUrlEncoder().encodeToString(response.getCursor().getBytes()));
         System.out.println("sending cursor as : " + response.getCursor());
         return response;

@@ -51,7 +51,10 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    // spring security documentation -> https://docs.spring.io/spring-security/reference/index.html
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
+    implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '10.0.1'
 }
 
 tasks.named('test') {
