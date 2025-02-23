@@ -108,6 +108,15 @@ public class UserService {
         userRepository.deleteById(userId);
     }
 
+    @Transactional
+    public void deleteUserByEmail(String email) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new UserNotFoundException("User not found");
+        }
+        userRepository.delete(user);
+    }
+
     // Helper method to process profile picture
     private String processProfilePicture(MultipartFile file) {
         try {
@@ -117,17 +126,4 @@ public class UserService {
             throw new RuntimeException("Failed to process profile picture", e);
         }
     }
-
-    public boolean authenticateUser(String userId, String password) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
-        return user != null && user.getPassword().equals(password);
-    }
-
-    public String authenticateUserAndGetToken(String email, String password) {
-        if (authenticateUser(email, password)) {
-            return Base64.getEncoder().encodeToString((email + ":" + password).getBytes()); // Simple token generation
-        }
-        return null;
-    }
-//    todo: get all files of user, integration between files table and users table (first check if files table actually needed or not)
 }

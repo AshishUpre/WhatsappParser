@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,10 +33,13 @@ public class GoogleDriveService {
 
         FileContent mediaContent = new FileContent("application/octet-stream", new java.io.File(filePath));
         File uploadedFile = drive.files().create(fileMetadata, mediaContent)
-                .setFields("id, name, parents")
+                .setFields("id, name, parents, size, createdTime")
+                // only these fields will be set in uploadedFile, and can get them using get*(), rest null
                 .execute();
+        System.out.println("uploadedFile: " + uploadedFile);
+        LocalDateTime now = LocalDateTime.now();
         return new DriveFileMetadata(uploadedFile.getId(), uploadedFile.getName(), uploadedFile.getSize(),
-                uploadedFile.getCreatedTime());
+                now);
     }
 
     public List<String> getAllFilesInFolder(String folderId) throws IOException {

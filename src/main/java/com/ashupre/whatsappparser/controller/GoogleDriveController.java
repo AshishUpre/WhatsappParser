@@ -1,11 +1,14 @@
 package com.ashupre.whatsappparser.controller;
 
 import com.ashupre.whatsappparser.model.DriveFileMetadata;
+import com.ashupre.whatsappparser.repository.UserRepository;
 import com.ashupre.whatsappparser.security.AESUtil;
 import com.ashupre.whatsappparser.service.ChatService;
+import com.ashupre.whatsappparser.service.FileDataService;
 import com.ashupre.whatsappparser.service.GoogleDriveService;
 import com.ashupre.whatsappparser.service.UserService;
 import com.ashupre.whatsappparser.util.CookieUtil;
+import com.ashupre.whatsappparser.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +21,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping("/api/drive")
 @RequiredArgsConstructor
 public class GoogleDriveController {
     private final GoogleDriveService googleDriveService;
@@ -27,17 +30,19 @@ public class GoogleDriveController {
 
     private final ChatService chatService;
 
+    private final FileDataService fileDataService;
+
     private final AESUtil aesUtil;
+    private final UserRepository userRepository;
 
     @PostMapping("/upload")
     public String uploadFile(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         try {
             System.out.println("Received file: " + file.getOriginalFilename());
-            String email = CookieUtil.getDecryptedCookieValue(request, "email", aesUtil);
-            String userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
-
+            String jwt = CookieUtil.getDecryptedCookieValue(request, "jwt", aesUtil);
+            String email = JwtUtil.extractEmail(jwt);
             System.out.println("got email: " + email);
-            System.out.println("got userId: " + userId);
+            String userId = userService.getUserByEmail(email).getId();
 
             // file handling
             // /tmp/filename absolute path for the file (get by convFile.getAbsolutePath())r
@@ -53,6 +58,7 @@ public class GoogleDriveController {
             System.out.println("fileId : " + metadata.getDriveId());
 
             // todo: store in DB first
+            fileDataService.saveFileData(metadata, userId);
             userService.addFile(userId, metadata.getFileName(), metadata.getDriveId());
 
             chatService.addChatsFromFile(file, userId, metadata.getDriveId());
@@ -62,7 +68,7 @@ public class GoogleDriveController {
         }
     }
 
-    @GetMapping("/api/drive/files/{folderId}")
+    @GetMapping("/files/{folderId}")
     public ResponseEntity<List<String>> getAllFilesByFolderId(@PathVariable String folderId) {
         System.out.println("Reached controller for folderId: " + folderId);
         try {

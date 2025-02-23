@@ -1,16 +1,20 @@
 package com.ashupre.whatsappparser.controller;
 
-import com.ashupre.whatsappparser.dto.LoginRequest;
 import com.ashupre.whatsappparser.model.User;
-import com.ashupre.whatsappparser.dto.UserDTO;
 import com.ashupre.whatsappparser.security.AESUtil;
+import com.ashupre.whatsappparser.service.FileDataService;
 import com.ashupre.whatsappparser.service.UserService;
 import com.ashupre.whatsappparser.util.CookieUtil;
-import jakarta.servlet.http.Cookie;
+import com.ashupre.whatsappparser.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.util.Pair;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,85 +27,33 @@ public class UserController {
 
     private final UserService userService;
 
+    private final FileDataService fileDataService;
+
     private final AESUtil aesUtil;
 
-    // Create a new user (Registration)
-    @PostMapping("/register")
-    public ResponseEntity<User> registerUser(@RequestBody UserDTO userDTO, HttpServletResponse response) {
-        User savedUser = userService.createUser(userDTO.getUsername(),
-                userDTO.getEmail(),
-                userDTO.getPassword(),
-                userDTO.getFile());
-
-        Cookie emailCookie = CookieUtil.createSecureHttpCookieWithEncryptedValues("email", savedUser.getEmail(),
-                aesUtil);
-        Cookie idCookie = CookieUtil.createSecureHttpCookieWithEncryptedValues("userId", savedUser.getId(),
-                aesUtil);
-
-        response.addCookie(emailCookie);
-        response.addCookie(idCookie);
-        return ResponseEntity.ok(savedUser);
-    }
-
-    // Login user
-    @PostMapping("/login")
-    public ResponseEntity<User> loginUser(@RequestBody LoginRequest loginRequest, HttpServletRequest request,
-            HttpServletResponse response) {
-        System.out.println("got login request body: " + loginRequest);
-        String email = "";
-        String userId = "";
-
-        if (CookieUtil.checkCookiePresent(request, "email")) {
-            email = CookieUtil.getDecryptedCookieValue(request, "email", aesUtil); // Decrypt and get the actual values
-        }
-
-        if (CookieUtil.checkCookiePresent(request, "userId")) {
-            userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
-        }
-
-        System.out.println("got email: " + email);
-        System.out.println("got userId: " + userId);
-
-        User savedUser;
-        boolean authenticated;
-
-        // this condition means the cookie was cleared previously on prev logout
-        // or it may mean cookie doesn't exist atall
-        if (email.equals("") && userId.equals("")) {
-            savedUser = userService.getUserByEmail(loginRequest.getEmail());
-            authenticated = userService.authenticateUser(savedUser.getId(), loginRequest.getPassword());
-        } else {
-            savedUser = userService.getUserByEmail(loginRequest.getEmail());
-            authenticated = userService.authenticateUser(savedUser.getId(), savedUser.getPassword());
-        }
-
-        Cookie emailCookie = CookieUtil.createSecureHttpCookieWithEncryptedValues("email", savedUser.getEmail(),
-                aesUtil);
-        Cookie idCookie = CookieUtil.createSecureHttpCookieWithEncryptedValues("userId", savedUser.getId(),
-                aesUtil);
-
-        if (authenticated) {
-            response.addCookie(emailCookie);
-            response.addCookie(idCookie);
-            return ResponseEntity.ok(savedUser);
-        } else {
-            return ResponseEntity.status(401).header("Error",
-                    "Invalid credentials").body(null);
-        }
+    /**
+     * an authenticated user can get their details through this endpoint, can be used for user profile page
+     * after authentication. Gets the user from the authentication principal (we can do this manually by using
+     * securitycontextholder but this is cleaner)
+     */
+    @GetMapping("/me")
+    public ResponseEntity<User> getUser(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(user);
     }
 
     // logout user - need this to clear the cookie in the browser
     @PostMapping("/logout")
-    public ResponseEntity<String> logoutUser(HttpServletRequest request, HttpServletResponse response) {
-//        String email = CookieUtil.getDecryptedCookieValue(request, "email", aesUtil); // Decrypt and get the actual values
-//        String userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
-//        System.out.println("got email: " + email);
-//        System.out.println("got userId: " + userId);
-        Cookie userIdCookie = CookieUtil.createSecureHttpCookieWithEncryptedValues("userId", "", aesUtil);
-        Cookie emailCookie = CookieUtil.createSecureHttpCookieWithEncryptedValues("email", "", aesUtil);
-        response.addCookie(userIdCookie);
-        response.addCookie(emailCookie);
-        return ResponseEntity.ok("Logged out successfully");
+    public ResponseEntity<String> logoutUser(Authentication authentication) {
+        if (authentication != null) {
+            SecurityContextHolder.getContext().setAuthentication(null);
+        }
+        ResponseCookie expiredCookie = CookieUtil.createSecureHttpJwtCookieWithEncryptedValues("jwt",
+                aesUtil.encrypt(""), aesUtil, 0);
+
+        // after logging out, clear the cookie to prevent session hijack
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
+                .body("Logged out successfully.");
     }
 
     // Update profile picture
@@ -109,7 +61,8 @@ public class UserController {
     public ResponseEntity<String> updateProfilePic(HttpServletRequest request, @RequestParam("file") MultipartFile file) {
         String userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
         userService.updateProfilePic(userId, file);
-        return ResponseEntity.ok("Profile picture updated successfully.");
+        return ResponseEntity.ok()
+                .body("Profile picture updated successfully.");
     }
 
     // Get all users
@@ -119,17 +72,33 @@ public class UserController {
     }
 
     @GetMapping("/files")
-    public ResponseEntity<List<User.FileMetadata>> getAllFilesOfUser(HttpServletRequest request) {
-        String userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
-        return ResponseEntity.ok(userService.getAllFilesOfUser(userId));
+    public ResponseEntity<List<Pair<String, String>>> getAllFilesOfUser(HttpServletRequest request) {
+        String jwt = CookieUtil.getDecryptedCookieValue(request, "jwt", aesUtil);
+        String email = JwtUtil.extractEmail(jwt);
+        String userId = userService.getUserByEmail(email).getId();
+
+        return ResponseEntity.ok(fileDataService.getAllFilesOfUser(userId));
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<String> deleteUser(HttpServletRequest request) {
-        String userId = CookieUtil.getDecryptedCookieValue(request, "userId", aesUtil);
-        String email = CookieUtil.getDecryptedCookieValue(request, "email", aesUtil);
-        userService.deleteUserById(userId);
-        return ResponseEntity.ok("User deleted successfully.");
+    public ResponseEntity<String> deleteUser(HttpServletRequest request, Authentication authentication) {
+        String jwt = CookieUtil.getDecryptedCookieValue(request, "jwt", aesUtil);
+        String email = JwtUtil.extractEmail(jwt);
+        userService.deleteUserByEmail(email);
+
+        System.out.println("authentication : " + authentication);
+        if (authentication != null) {
+            SecurityContextHolder.getContext().setAuthentication(null);
+        }
+
+        // we make an expired expiredCookie and send it to clear out the expiredCookie
+        ResponseCookie expiredCookie = CookieUtil.createSecureHttpJwtCookieWithEncryptedValues("jwt",
+                aesUtil.encrypt(""), aesUtil, 0);
+
+        // after deletion clear out the expiredCookie of the user so that they cannot log in
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
+                .body("User deleted successfully.");
     }
 
 }

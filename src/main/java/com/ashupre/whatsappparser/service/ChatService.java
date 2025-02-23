@@ -5,7 +5,7 @@ import com.ashupre.whatsappparser.model.ChatCursor;
 import com.ashupre.whatsappparser.dto.ChatResponsePaginated;
 import com.ashupre.whatsappparser.model.Chat;
 import com.ashupre.whatsappparser.model.ChatEntry;
-import com.ashupre.whatsappparser.repository.ChatRepository;
+import com.ashupre.whatsappparser.util.TimeFormatUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -36,10 +36,12 @@ import java.util.regex.Pattern;
 public class ChatService {
 
     private final DateTimeFormatter inputFormatter;
+
     private final DateTimeFormatter outputFormatter;
-    private final ChatRepository chatRepository;
+
     private final MongoTemplate mongoTemplate;
-    private final ObjectMapper mapper;
+
+    private final ObjectMapper jacksonMapper;
     /**
      * No need to create a mongoTemplate, springboot will automatically create a mongoTemplate for us using
      * the uri given in application.properties, we simply inject it
@@ -108,7 +110,7 @@ public class ChatService {
                     Chat chat = new Chat();
                     chat.setMessage(entry.message());
                     // convert timestamp to utc before storing in db
-                    chat.setTimestamp(Chat.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")));
+                    chat.setTimestamp(TimeFormatUtil.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")));
                     chat.setSender(entry.name());
                     chat.setUserId(userId);
                     chat.setFileDriveId(fileDriveId);
@@ -160,7 +162,7 @@ public class ChatService {
 
         String cursorJSON;
         try {
-            cursorJSON = mapper.writeValueAsString(cursor);
+            cursorJSON = jacksonMapper.writeValueAsString(cursor);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("JSON exception " + e.getMessage());
         }
@@ -175,7 +177,7 @@ public class ChatService {
                                 chat.getSender(),
                                 chat.getMessage(),
                                 // convert back to local after getting from DB, format as like in chat export text file
-                                Chat.utcToLocal(chat.getTimestamp(), ZoneId.of("Asia/Kolkata"))
+                                TimeFormatUtil.utcToLocal(chat.getTimestamp(), ZoneId.of("Asia/Kolkata"))
                                         .format(outputFormatter)
                         )
                 ).toList();

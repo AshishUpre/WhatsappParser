@@ -32,4 +32,9 @@ public class EnvConfig {
     public String iv() {
         return dotenv.get("AES_IV");
     }
+
+    @Bean
+    public String jwtSecret() {
+        return dotenv.get("JWT_SECRET");
+    }
 }
