@@ -61,9 +61,13 @@ public class ChatService {
             String timestamp = null;
             StringBuilder messageBuilder = new StringBuilder();
 
-            Pattern messagePattern = Pattern
-                    .compile("^(\\d{2}/\\d{2}/\\d{2}, \\d{1,2}:\\d{2} [ap]m) [-] (.*?): (.*)$");
-
+            Pattern messagePattern = Pattern.compile(
+                     // * \h? instead of a space before [ap]m
+                     // * This allows for either a normal space or a non-breaking space (newer exports have small
+                     // * gap between that is not a space -> non-breaking space).
+                     // * similarly for beside -
+                    "^(\\d{2}/\\d{2}/\\d{2}, \\d{1,2}:\\d{2}[\\h]?[ap]m)[\\h]-[\\h](.*?):\\s(.*)$"
+            );
             while ((line = reader.readLine()) != null) {
                 Matcher matcher = messagePattern.matcher(line);
 
@@ -71,6 +75,9 @@ public class ChatService {
                 if (matcher.matches()) {
                     // save prev message before processing new one
                     if (timestamp != null && name != null && !messageBuilder.isEmpty()) {
+                        // convert non-breaking space (U+202F) to regular space as non-breaking spaces cant be
+                        // parsed by LocalDateTime
+                        timestamp = timestamp.replace("\u202F", " ");
                         logEntries.add(new ChatEntry(LocalDateTime.parse(timestamp, inputFormatter),
                                 name, messageBuilder.toString()));
                     }
@@ -91,6 +98,9 @@ public class ChatService {
 
             // last message
             if (timestamp != null && name != null && !messageBuilder.isEmpty()) {
+                // convert non-breaking space (U+202F) to regular space as non-breaking spaces cant be
+                // parsed by LocalDateTime
+                timestamp = timestamp.replace("\u202F", " ");
                 logEntries.add(new ChatEntry(LocalDateTime.parse(timestamp, inputFormatter),
                         name, messageBuilder.toString().trim()));
             }
@@ -105,6 +115,8 @@ public class ChatService {
 
 
     public void writeLogsToDB(List<ChatEntry> logEntries, String userId, String fileDriveId) {
+        System.out.println(" ====================================================================================== ");
+        System.out.println(logEntries);
         List<Chat> chatList = logEntries.stream().map(
                 entry -> {
                     Chat chat = new Chat();

@@ -4,11 +4,17 @@ import com.ashupre.whatsappparser.model.ChatCursor;
 import com.ashupre.whatsappparser.dto.ChatResponsePaginated;
 import com.ashupre.whatsappparser.security.AESUtil;
 import com.ashupre.whatsappparser.service.ChatService;
+import com.ashupre.whatsappparser.service.UserService;
+import com.ashupre.whatsappparser.util.CookieUtil;
+import com.ashupre.whatsappparser.util.JwtUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Base64;
+
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -21,13 +27,16 @@ public class ChatController {
     private final AESUtil aesUtil;
 
     private final ObjectMapper jacksonMapper;
+    private final UserService userService;
 
     // todo : fine tune this and what it calls
-    @GetMapping("/{fileDriveId}/{userId}/cursor={cursor}")
-    public ChatResponsePaginated getPaginatedChats(@PathVariable String fileDriveId, @PathVariable String userId,
+    @GetMapping("/{fileDriveId}/cursor={cursor}")
+    public ChatResponsePaginated getPaginatedChats(@PathVariable String fileDriveId, HttpServletRequest request,
                                                    @PathVariable String cursor) throws JsonProcessingException {
         ChatCursor prevCursor;
         System.out.println("cursor: " + cursor);
+        String jwt = CookieUtil.getDecryptedCookieValue(request, "jwt", aesUtil);
+        String userId = userService.getUserByEmail(JwtUtil.extractEmail(jwt)).getId();
 
         if (cursor == null || cursor.isEmpty()) {
             prevCursor = null;
@@ -50,6 +59,11 @@ public class ChatController {
         response.setCursor(aesUtil.encrypt(response.getCursor()));
         response.setCursor(Base64.getUrlEncoder().encodeToString(response.getCursor().getBytes()));
         System.out.println("sending cursor as : " + response.getCursor());
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e + "Thread interrupted");
+        }
         return response;
     }
 }
