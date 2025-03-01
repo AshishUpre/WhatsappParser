@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 
-@RestControllerAdvice // needed for using the methods in it as exceptionhandlers
+@RestControllerAdvice // needed for using the methods in it as exceptionHandlers
 public class GlobalExceptionHandler {
 
     /**

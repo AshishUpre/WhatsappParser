@@ -12,26 +12,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
-
-    // Create a new user with an optional profile picture
-    public User createUser(String username, String email, String password, MultipartFile file) {
-        User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(password);
-
-        if (file != null && !file.isEmpty()) {
-            user.setProfilePic(processProfilePicture(file));
-        }
-
-        return userRepository.save(user);
-    }
 
     @Transactional
     public void addFile(String userId, String fileName, String driveId) {
@@ -45,7 +32,7 @@ public class UserService {
 
         if (!user.hasFileDriveId(driveId)) {
             List<User.FileMetadata> files = user.getFiles();
-            files.add(new User.FileMetadata(fileName, driveId));
+            files.add(new User.FileMetadata(fileName, driveId, null));
             user.setFiles(files);
         }
 
@@ -78,11 +65,11 @@ public class UserService {
 
     // Get a user by email
     public User getUserByEmail(String email) {
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
+        Optional<User> user = userRepository.findByEmail(email);
+        if (user.isEmpty()) {
             throw new RuntimeException("User not found");
         }
-        return user;
+        return user.get();
     }
 
     // Get a user by ID
@@ -110,10 +97,7 @@ public class UserService {
 
     @Transactional
     public void deleteUserByEmail(String email) {
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new UserNotFoundException("User not found");
-        }
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found"));
         userRepository.delete(user);
     }
 

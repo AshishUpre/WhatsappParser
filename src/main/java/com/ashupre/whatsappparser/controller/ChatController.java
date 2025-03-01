@@ -1,20 +1,20 @@
 package com.ashupre.whatsappparser.controller;
 
+import com.ashupre.whatsappparser.exceptions.UserNotFoundException;
 import com.ashupre.whatsappparser.model.ChatCursor;
 import com.ashupre.whatsappparser.dto.ChatResponsePaginated;
+import com.ashupre.whatsappparser.repository.UserRepository;
 import com.ashupre.whatsappparser.security.AESUtil;
 import com.ashupre.whatsappparser.service.ChatService;
-import com.ashupre.whatsappparser.service.UserService;
-import com.ashupre.whatsappparser.util.CookieUtil;
-import com.ashupre.whatsappparser.util.JwtUtil;
+import com.ashupre.whatsappparser.util.OAuth2PrincipalUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
+import java.security.Principal;
 import java.util.Base64;
 
-import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -27,16 +27,18 @@ public class ChatController {
     private final AESUtil aesUtil;
 
     private final ObjectMapper jacksonMapper;
-    private final UserService userService;
 
-    // todo : fine tune this and what it calls
+    private final UserRepository userRepository;
+
     @GetMapping("/{fileDriveId}/cursor={cursor}")
     public ChatResponsePaginated getPaginatedChats(@PathVariable String fileDriveId, HttpServletRequest request,
-                                                   @PathVariable String cursor) throws JsonProcessingException {
+                                                   @PathVariable String cursor, Principal user)
+            throws JsonProcessingException {
         ChatCursor prevCursor;
         System.out.println("cursor: " + cursor);
-        String jwt = CookieUtil.getDecryptedCookieValue(request, "jwt", aesUtil);
-        String userId = userService.getUserByEmail(JwtUtil.extractEmail(jwt)).getId();
+        String userId = userRepository.findByProviderId(
+                        OAuth2PrincipalUtil.getAttributes(user, "sub")
+                ).orElseThrow(() -> new UserNotFoundException("User not found")).getId();
 
         if (cursor == null || cursor.isEmpty()) {
             prevCursor = null;
@@ -49,12 +51,6 @@ public class ChatController {
 
         ChatResponsePaginated response = chatService.getPaginatedChats(userId, fileDriveId, prevCursor);
         System.out.println("cursor before enc : " + response.getCursor());
-
-        // encrypt the cursor then convert to Base64 and send
-        // WHY? because on encryption, there is a chance of characters like +, /, =, etc.
-        // if / is there it will be another route and wont get routed to this route
-        // but Base64 encoding doesnt have most special characters, but it has + and /
-        // hence we make use of URL safe Base64 encoding that converts + and / to - and _
 
         response.setCursor(aesUtil.encrypt(response.getCursor()));
         response.setCursor(Base64.getUrlEncoder().encodeToString(response.getCursor().getBytes()));
