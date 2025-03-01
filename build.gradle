@@ -55,6 +55,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
     implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '10.0.1'
+
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 }
 
 tasks.named('test') {
