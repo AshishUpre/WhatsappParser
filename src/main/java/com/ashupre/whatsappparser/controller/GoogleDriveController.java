@@ -7,9 +7,7 @@ import com.ashupre.whatsappparser.service.ChatService;
 import com.ashupre.whatsappparser.service.FileDataService;
 import com.ashupre.whatsappparser.service.GoogleDriveService;
 import com.ashupre.whatsappparser.service.UserService;
-import com.ashupre.whatsappparser.util.CookieUtil;
-import com.ashupre.whatsappparser.util.JwtUtil;
-import jakarta.servlet.http.HttpServletRequest;
+import com.ashupre.whatsappparser.util.OAuth2PrincipalUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -26,21 +25,20 @@ import java.util.List;
 public class GoogleDriveController {
     private final GoogleDriveService googleDriveService;
 
-    private final UserService userService;
-
     private final ChatService chatService;
 
     private final FileDataService fileDataService;
 
     private final AESUtil aesUtil;
     private final UserRepository userRepository;
+    private final UserService userService;
 
     @PostMapping("/upload")
-    public String uploadFile(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+    public String uploadFile(@RequestParam("file") MultipartFile file, Principal user) {
         try {
             System.out.println("Received file: " + file.getOriginalFilename());
-            String jwt = CookieUtil.getDecryptedCookieValue(request, "jwt", aesUtil);
-            String email = JwtUtil.extractEmail(jwt);
+            // todo : get email here
+            String email = OAuth2PrincipalUtil.getAttributes(user, "email");;
             System.out.println("got email: " + email);
             String userId = userService.getUserByEmail(email).getId();
 

@@ -2,6 +2,7 @@
 src/main/resources/credentials.json
 **/**/*.env.json
 HELP.md
+deprecated
 .gradle
 build/
 gradle/
