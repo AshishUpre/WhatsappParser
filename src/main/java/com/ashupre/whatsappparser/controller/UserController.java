@@ -3,19 +3,16 @@ package com.ashupre.whatsappparser.controller;
 import com.ashupre.whatsappparser.dto.UserDTO;
 import com.ashupre.whatsappparser.exceptions.UserNotFoundException;
 import com.ashupre.whatsappparser.repository.UserRepository;
-import com.ashupre.whatsappparser.security.AESUtil;
 import com.ashupre.whatsappparser.service.FileDataService;
 import com.ashupre.whatsappparser.service.UserService;
-import com.ashupre.whatsappparser.util.CookieUtil;
 import com.ashupre.whatsappparser.util.OAuth2PrincipalUtil;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -31,7 +28,6 @@ public class UserController {
 
     private final FileDataService fileDataService;
 
-    private final AESUtil aesUtil;
     private final UserRepository userRepository;
 
     /**
@@ -46,16 +42,19 @@ public class UserController {
 
     // logout user - need this to clear the cookie in the browser
     @PostMapping("/logout")
-    public ResponseEntity<String> logoutUser(Authentication authentication) {
-        if (authentication != null) {
-            SecurityContextHolder.getContext().setAuthentication(null);
-        }
-        ResponseCookie expiredCookie = CookieUtil.createSecureHttpJwtCookieWithEncryptedValues("jwt",
-                aesUtil.encrypt(""), aesUtil, 0);
+    public ResponseEntity<String> logoutUser(Principal user, HttpServletRequest request, HttpServletResponse response) {
+        // Invalidate session
+        System.out.println(" ============ reached logout ================= ");
+        request.getSession().invalidate();
+        response.setHeader(HttpHeaders.SET_COOKIE, "JSESSIONID=; Path=/; HttpOnly; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
 
-        // after logging out, clear the cookie to prevent session hijack
+        if (user == null) {
+            return ResponseEntity.ok()
+                    // no use
+                    // .header(HttpHeaders.SET_COOKIE, "JSESSIONID=; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/")
+                    .body("Not logged in.");
+        }
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
                 .body("Logged out successfully.");
     }
 
@@ -70,7 +69,8 @@ public class UserController {
         List<Pair<String, String>> files = fileDataService.getAllFilesOfUser(
                     userRepository.findByProviderId(providerId).orElseThrow(() ->
                             new UserNotFoundException("User not found")
-                ).getId());
+                    ).getId()
+        );
         return ResponseEntity.ok(files);
     }
 

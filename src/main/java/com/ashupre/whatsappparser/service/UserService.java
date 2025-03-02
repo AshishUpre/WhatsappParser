@@ -39,30 +39,6 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public List<User.FileMetadata> getAllFilesOfUser(String userId) {
-        System.out.println("reached user service, get all files of user");
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        System.out.println("user: " + user);
-        if (user == null) {
-            throw new RuntimeException("User not found");
-        }
-        return user.getFiles();
-    }
-
-    // Update an existing user's profile picture
-    @Transactional
-    public User updateProfilePic(String userId, MultipartFile file) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        if (file != null && !file.isEmpty()) {
-            user.setProfilePic(processProfilePicture(file));
-        }
-
-        return userRepository.save(user);
-    }
-
     // Get a user by email
     public User getUserByEmail(String email) {
         Optional<User> user = userRepository.findByEmail(email);
