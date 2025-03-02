@@ -29,20 +29,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2User oAuth2User = super.loadUser(userRequest);
         System.out.println(" =================================== reached here ========================================== ");
 
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            String userRequestJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(userRequest);
-            String userJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(oAuth2User.getAttributes());
-
-            System.out.println("========== OAuth2 User Request ==========");
-            System.out.println(userRequestJson);
-
-            System.out.println("\n========== OAuth2 User Info ==========");
-            System.out.println(userJson);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         Map<String, Object> attributes = oAuth2User.getAttributes();
         String provider = userRequest.getClientRegistration().getRegistrationId(); // "google", "github"
         String providerId = attributes.get("sub").toString(); // Google uses "sub", GitHub uses "id"

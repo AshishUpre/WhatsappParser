@@ -1,8 +1,6 @@
 package com.ashupre.whatsappparser.controller;
 
 import com.ashupre.whatsappparser.model.DriveFileMetadata;
-import com.ashupre.whatsappparser.repository.UserRepository;
-import com.ashupre.whatsappparser.security.AESUtil;
 import com.ashupre.whatsappparser.service.ChatService;
 import com.ashupre.whatsappparser.service.FileDataService;
 import com.ashupre.whatsappparser.service.GoogleDriveService;
@@ -29,8 +27,6 @@ public class GoogleDriveController {
 
     private final FileDataService fileDataService;
 
-    private final AESUtil aesUtil;
-    private final UserRepository userRepository;
     private final UserService userService;
 
     @PostMapping("/upload")

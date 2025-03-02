@@ -9,7 +9,6 @@ import com.ashupre.whatsappparser.service.ChatService;
 import com.ashupre.whatsappparser.util.OAuth2PrincipalUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import java.security.Principal;
@@ -31,9 +30,8 @@ public class ChatController {
     private final UserRepository userRepository;
 
     @GetMapping("/{fileDriveId}/cursor={cursor}")
-    public ChatResponsePaginated getPaginatedChats(@PathVariable String fileDriveId, HttpServletRequest request,
-                                                   @PathVariable String cursor, Principal user)
-            throws JsonProcessingException {
+    public ChatResponsePaginated getPaginatedChats(@PathVariable String fileDriveId, @PathVariable String cursor,
+                                                   Principal user) throws JsonProcessingException {
         ChatCursor prevCursor;
         System.out.println("cursor: " + cursor);
         String userId = userRepository.findByProviderId(
@@ -56,7 +54,7 @@ public class ChatController {
         response.setCursor(Base64.getUrlEncoder().encodeToString(response.getCursor().getBytes()));
         System.out.println("sending cursor as : " + response.getCursor());
         try {
-            Thread.sleep(2000);
+            Thread.sleep(1200);
         } catch (InterruptedException e) {
             throw new RuntimeException(e + "Thread interrupted");
         }
