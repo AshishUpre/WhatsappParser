@@ -6,13 +6,15 @@ import com.ashupre.whatsappparser.repository.UserRepository;
 import com.ashupre.whatsappparser.service.FileDataService;
 import com.ashupre.whatsappparser.service.UserService;
 import com.ashupre.whatsappparser.util.OAuth2PrincipalUtil;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -35,11 +37,20 @@ public class UserController {
      * similarly OAuth2AuthenticationToken is also present. from that token we can get the principal too
      */
     @GetMapping("/me")
-    public ResponseEntity<UserDTO> getUser(Principal user) {
-        System.out.println("principal : " + user);
+    public ResponseEntity<UserDTO> getUser(Principal user, Authentication authentication, HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            System.out.println("session is null in user controller");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+        if (authentication == null || !authentication.isAuthenticated()) {
+            System.out.println("authentication / not authenticated is null in user controller");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
         return ResponseEntity.ok(new UserDTO(user));
     }
 
+    // not needed, just for testing
     // logout user - need this to clear the cookie in the browser
     @PostMapping("/logout")
     public ResponseEntity<String> logoutUser(Principal user, HttpServletRequest request, HttpServletResponse response) {
@@ -62,7 +73,6 @@ public class UserController {
     public ResponseEntity<List<Pair<String, String>>> getAllFilesOfUser(HttpServletRequest request, Principal user) {
         System.out.println("reached user controller, get all files of user");
         System.out.println("request: " + Arrays.toString(Arrays.stream(request.getCookies()).toArray()));
-        System.out.println("user: " + user);
 
         // note: sub only applicable to google
         String providerId = OAuth2PrincipalUtil.getAttributes(user,"sub");
