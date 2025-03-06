@@ -1,4 +1,6 @@
+WPkeypair.pem
 .env
+def
 src/main/resources/credentials.json
 **/**/*.env.json
 HELP.md

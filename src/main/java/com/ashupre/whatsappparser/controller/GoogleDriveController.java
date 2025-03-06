@@ -33,7 +33,7 @@ public class GoogleDriveController {
     public String uploadFile(@RequestParam("file") MultipartFile file, Principal user) {
         try {
             System.out.println("Received file: " + file.getOriginalFilename());
-            // todo : get email here
+
             String email = OAuth2PrincipalUtil.getAttributes(user, "email");;
             System.out.println("got email: " + email);
             String userId = userService.getUserByEmail(email).getId();
@@ -51,7 +51,6 @@ public class GoogleDriveController {
             System.out.println("filename : " + metadata.getFileName());
             System.out.println("fileId : " + metadata.getDriveId());
 
-            // todo: store in DB first
             fileDataService.saveFileData(metadata, userId);
             userService.addFile(userId, metadata.getFileName(), metadata.getDriveId());
 

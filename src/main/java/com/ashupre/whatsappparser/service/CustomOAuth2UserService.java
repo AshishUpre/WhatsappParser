@@ -10,7 +10,6 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import java.util.Map;
-import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * CustomOAuth2UserService is a custom implementation of DefaultOAuth2UserService, responsible for handling
  * OAuth2 user authentication in a Spring Boot application. This service retrieves user details from an OAuth2
@@ -27,10 +26,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        System.out.println(" =================================== reached here ========================================== ");
+        System.out.println(" =================================== about to load user ===============================" +
+                "============ ");
 
         Map<String, Object> attributes = oAuth2User.getAttributes();
-        String provider = userRequest.getClientRegistration().getRegistrationId(); // "google", "github"
+        String provider = userRequest.getClientRegistration().getRegistrationId(); // "google" "github" etc
         String providerId = attributes.get("sub").toString(); // Google uses "sub", GitHub uses "id"
         String email = attributes.get("email").toString();
         String name = attributes.get("name").toString();
@@ -46,10 +46,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .profilePic(profilePic)
                         .build()
                 );
+        System.out.println("user got from db : " + user);
 
-        System.out.println("user " + user);
         // save (mongodb save method will insert if new, or update if exists)
-        userRepository.save(user);
+       User savedUser = userRepository.save(user);
+        System.out.println("Saved user: " + savedUser);
         return new DefaultOAuth2User(
                 oAuth2User.getAuthorities(),
                 attributes,

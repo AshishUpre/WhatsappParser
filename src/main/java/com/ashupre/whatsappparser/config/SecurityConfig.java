@@ -1,44 +1,48 @@
 package com.ashupre.whatsappparser.config;
 
 import com.ashupre.whatsappparser.service.CustomOAuth2UserService;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSessionEvent;
+import jakarta.servlet.http.HttpSessionListener;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler;
-import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.io.IOException;
 import java.util.List;
 
+/**
+ * added depends on cause was getting mongo error due to conn string being wrong
+ * meaning when creating mongo related beans, env wasnt loaded and mongo related beans created after this
+ * class cause this class needs custom oauth2 user service, that needs userRepo which needs mongo
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@DependsOn("envConfig")
 public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
+
+    private final String ec2Url;
 
     @Bean
     public CorsConfigurationSource corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // 5173 - vite default
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        // left -> local testing 5173 - vite default | right -> aws s3 bucket hosted website
+        config.setAllowedOriginPatterns(List.of("*"));
+        // config.setAllowedOrigins(List.of("http://localhost:5173", "http://49.37.131.70"));
+        config.addAllowedMethod("*");
+        config.addAllowedHeader("*");
         config.setAllowCredentials(true);
+        // config.addExposedHeader("Set-Cookie");
         source.registerCorsConfiguration("/**", config);
         return source;
     }
@@ -51,64 +55,76 @@ public class SecurityConfig {
                 // for jwt we used stateless, if we use stateless even for oauth2, every time even after user logging in
                 // they will have to login again when going to different route => no persistance of session
                 // => dont make the session stateless so that user can stay logged in
-//                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                //.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(registry -> registry
-                        .requestMatchers("/login", "/api/user/logout").permitAll()
+                        .requestMatchers("/login","/api/user/logout").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> {
                     // oauth2Login.loginPage("/api/auth/login");
                     // register this service to get user details and put it in db after getting user info from provider
                     oauth2Login.userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService));
-                    // after auth it goes to /profile
-                    oauth2Login.successHandler((request, response, authentication) -> response.sendRedirect("http://localhost:5173/callback"));
+                    oauth2Login.failureHandler((request, response, exception) -> {
+                        System.out.println("failure handler reached ====================================== ");
+                        System.out.println("exception: " + exception);
+                    });
+                    // after auth it goes to /callback which will do some stuff and send to /dashboard
+                    oauth2Login.successHandler((request, response, authentication) -> {
+                        System.out.println("success handler reached SUCCESS REQUEST ========================================= ");
+
+                        // explicit redirect to /callback as present on same ec2
+                        String redirectUrl = ec2Url + "/callback";
+                        response.sendRedirect(redirectUrl);
+                        // Try to get the origin from the Origin header
+//                        String origin = request.getHeader("Origin");
+//
+//                        // If Origin is null, try using the Referer header
+//                        if (origin == null) {
+//                            origin = request.getHeader("Referer");
+//                            System.out.println("Using Referer: " + origin);
+//                        }
+//
+//                        // If both Origin and Referer are null, construct it from the Host header
+//                        if (origin == null) {
+//                            String scheme = request.isSecure() ? "https://" : "http://";
+//                            origin = scheme + request.getHeader("Host");
+//                            System.out.println("Using Host header: " + origin);
+//                        }
+//
+//                        // slash already there at the end of referer
+//                        String redirect = origin + "callback";
+//                        System.out.println("redirect: " + redirect);
+//
+//                        response.sendRedirect(redirect);
+                    });
                 })
                 .logout(httpSecurityLogoutConfigurer -> {
                     httpSecurityLogoutConfigurer
                             .clearAuthentication(true)
                             .invalidateHttpSession(true)
+                            // this will delete cookie JSESSIONID on logout
                             .deleteCookies("JSESSIONID")
-                            // .logoutUrl("/api/user/logout")
-                            // this not working either - no session, no cookies found, authentication is null
-                            .addLogoutHandler((request, response, authentication) -> {
-                                SecurityContextHolder.clearContext();
-                                HttpSession session = request.getSession(false);
-                                if (session != null) {
-                                    System.out.println("session not invalidated yet, hence invalidating");
-                                    session.invalidate();
-                                }
-
-                                // Check if cookies are present before processing them
-                                if (request.getCookies() != null) {
-                                    for (Cookie cookie : request.getCookies()) {
-                                        System.out.println(cookie.getName());
-                                        cookie.setMaxAge(0);
-                                        cookie.setPath("/");
-                                        response.addCookie(cookie);
-                                    }
-                                } else {
-                                    System.out.println("No cookies found.");
-                                }
-                                System.out.println("reached custom logout handler ============================== 111111");
-                            })
-                            .logoutSuccessHandler((request, response, authentication) -> {
-                                //  NOT WORKING
-                                // Clear the JSESSIONID cookie by setting it with an expiration date in the past
-                                // Cookie cookie = new Cookie("JSESSIONID", null);
-                                // cookie.setPath("/"); // Ensure the path matches the one used for the cookie
-                                // cookie.setMaxAge(0); // Set the max age to 0 to delete the cookie
-                                // response.addCookie(cookie); // Add the cookie to the response
-
-                                // Send an OK response
-                                System.out.println("reached custom logout handler ============================== ");
-                            });
+                            .logoutUrl("/api/user/logout");
                 });
-                // give default form for login
-                // .formLogin(Customizer.withDefaults());
+                // .formLogin(Customizer.withDefaults()); // gives default form for login
                 // FOR JWT
                 // .addFilterBefore(new JwtAuthenticationFilter(aesUtil, jwtService ,userDetailsService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    @Bean
+    public HttpSessionListener httpSessionListener() {
+        return new HttpSessionListener() {
+            @Override
+            public void sessionCreated(HttpSessionEvent se) {
+                System.out.println("\n ======================== Session Created: " + se.getSession().getId());
+            }
+
+            @Override
+            public void sessionDestroyed(HttpSessionEvent se) {
+                System.out.println("Session Destroyed: " + se.getSession().getId());
+            }
+        };
+    }
 }
