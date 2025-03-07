@@ -51,7 +51,6 @@ public class ChatService {
      *                     "whatsapp_parser")
      *     );
      */
-
     public ResponseEntity<String> addChatsFromFile(MultipartFile file, String userId, String fileDriveId) {
         List<ChatEntry> logEntries = new ArrayList<>();
 
@@ -116,7 +115,6 @@ public class ChatService {
 
     public void writeLogsToDB(List<ChatEntry> logEntries, String userId, String fileDriveId) {
         System.out.println(" ====================================================================================== ");
-        System.out.println(logEntries);
         List<Chat> chatList = logEntries.stream().map(
                 entry -> {
                     Chat chat = new Chat();
