@@ -35,4 +35,5 @@ public class User {
     public boolean hasFileDriveId(String driveId) {
         return files != null && files.stream().anyMatch(file -> file.getDriveId().equals(driveId));
     }
+
 }
