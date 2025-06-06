@@ -115,19 +115,32 @@ public class ChatService {
 
     public void writeLogsToDB(List<ChatEntry> logEntries, String userId, String fileDriveId) {
         System.out.println(" ====================================================================================== ");
-        List<Chat> chatList = logEntries.stream().map(
-                entry -> {
-                    Chat chat = new Chat();
-                    chat.setMessage(entry.message());
-                    // convert timestamp to utc before storing in db
-                    chat.setTimestamp(TimeFormatUtil.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")));
-                    chat.setSender(entry.name());
-                    chat.setUserId(userId);
-                    chat.setFileDriveId(fileDriveId);
-                    // chat.setFileName();
-                    return chat;
-                }
-        ).toList();
+        List<Chat> chatList;
+        // parallelize if many chats
+        if (logEntries.size() > 500) {
+            chatList = logEntries.parallelStream()
+                    .map(
+                            entry -> Chat.builder()
+                                    .message(entry.message())
+                                    .userId(userId)
+                                    .sender(entry.name())
+                                    // convert timestamp to utc before storing in db
+                                    .timestamp(TimeFormatUtil.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")))
+                                    .fileDriveId(fileDriveId)
+                                    .build()
+            ).toList();
+        } else {
+            chatList = logEntries.stream().map(
+                    entry -> Chat.builder()
+                            .message(entry.message())
+                            .userId(userId)
+                            .sender(entry.name())
+                            // convert timestamp to utc before storing in db
+                            .timestamp(TimeFormatUtil.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")))
+                            .fileDriveId(fileDriveId)
+                            .build()
+            ).toList();
+        }
 
         if (!chatList.isEmpty()) {
             saveChatsToDbAsync(chatList);

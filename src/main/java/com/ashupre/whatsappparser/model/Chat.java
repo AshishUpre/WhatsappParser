@@ -1,5 +1,6 @@
 package com.ashupre.whatsappparser.model;
 
+import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.IndexDirection;
@@ -10,6 +11,7 @@ import java.time.Instant;
 
 @Document(collection = "chats")
 @Data
+@Builder
 public class Chat {
 
     @Id

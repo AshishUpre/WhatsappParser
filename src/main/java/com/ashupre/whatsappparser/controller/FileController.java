@@ -18,9 +18,10 @@ import java.security.Principal;
 import java.util.List;
 
 @RestController
+// todo: change to /api/files
 @RequestMapping("/api/drive")
 @RequiredArgsConstructor
-public class GoogleDriveController {
+public class FileController {
     private final GoogleDriveService googleDriveService;
 
     private final ChatService chatService;
@@ -71,6 +72,5 @@ public class GoogleDriveController {
             return ResponseEntity.internalServerError().body(List.of("Error retrieving files: " + e.getMessage()));
         }
     }
-
 
 }
