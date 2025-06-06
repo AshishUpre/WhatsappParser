@@ -7,4 +7,8 @@ import java.util.List;
 
 public interface ChatRepository extends MongoRepository<Chat, Long> {
     List<Chat> findByUserId(String userId);
+
+    void deleteChatsByFileDriveId(String fileDriveId);
+
+    void deleteChatsByFileDbId(String fileDbId);
 }

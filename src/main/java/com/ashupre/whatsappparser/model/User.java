@@ -1,6 +1,5 @@
 package com.ashupre.whatsappparser.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -17,23 +16,18 @@ public class User {
     private String name;
     // the oauth provider e.g., "google", "github"
     private String provider;
-    // id from oauth provider
+    // id of user  from oauth provider
     private String providerId;
     private String email;
     private String profilePic;
     private List<FileMetadata> files;
 
-
-    @Data
-    @AllArgsConstructor
-    public static class FileMetadata {
-        private String fileName;
-        private String driveId; // References uploaded files
-        private String fileId;
-    }
+    public record FileMetadata (String fileName,
+                                String driveId, // References uploaded files
+                                String fileId) {}
 
     public boolean hasFileDriveId(String driveId) {
-        return files != null && files.stream().anyMatch(file -> file.getDriveId().equals(driveId));
+        return files != null && files.stream().anyMatch(file -> file.driveId().equals(driveId));
     }
 
 }

@@ -5,6 +5,7 @@ import com.ashupre.whatsappparser.model.ChatCursor;
 import com.ashupre.whatsappparser.dto.ChatResponsePaginated;
 import com.ashupre.whatsappparser.model.Chat;
 import com.ashupre.whatsappparser.model.ChatEntry;
+import com.ashupre.whatsappparser.repository.ChatRepository;
 import com.ashupre.whatsappparser.util.TimeFormatUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +43,9 @@ public class ChatService {
     private final MongoTemplate mongoTemplate;
 
     private final ObjectMapper jacksonMapper;
+
+    private final ChatRepository chatRepository;
+
     /**
      * No need to create a mongoTemplate, springboot will automatically create a mongoTemplate for us using
      * the uri given in application.properties, we simply inject it
@@ -206,4 +210,7 @@ public class ChatService {
                 ).toList();
     }
 
+    public void deleteChats(String fileDriveId) {
+        chatRepository.deleteChatsByFileDriveId(fileDriveId);
+    }
 }

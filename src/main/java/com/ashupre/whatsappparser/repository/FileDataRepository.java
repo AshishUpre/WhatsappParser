@@ -4,4 +4,5 @@ import com.ashupre.whatsappparser.model.FileData;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface FileDataRepository extends MongoRepository<FileData, String> {
+    void deleteFileDataByGdriveId(String gdriveId);
 }

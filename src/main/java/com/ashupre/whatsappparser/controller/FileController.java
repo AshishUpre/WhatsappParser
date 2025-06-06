@@ -1,11 +1,9 @@
 package com.ashupre.whatsappparser.controller;
 
 import com.ashupre.whatsappparser.model.DriveFileMetadata;
-import com.ashupre.whatsappparser.service.ChatService;
-import com.ashupre.whatsappparser.service.FileDataService;
-import com.ashupre.whatsappparser.service.GoogleDriveService;
-import com.ashupre.whatsappparser.service.UserService;
+import com.ashupre.whatsappparser.service.*;
 import com.ashupre.whatsappparser.util.OAuth2PrincipalUtil;
+import com.google.api.client.http.HttpStatusCodes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +27,8 @@ public class FileController {
     private final FileDataService fileDataService;
 
     private final UserService userService;
+
+    private final TransactionalDeletionService deletionService;
 
     @PostMapping("/upload")
     public String uploadFile(@RequestParam("file") MultipartFile file, Principal user) {
@@ -62,7 +62,15 @@ public class FileController {
         }
     }
 
-    @GetMapping("/files/{folderId}")
+    @DeleteMapping("/{fileDriveId}")
+    public ResponseEntity<String> deleteFile(Principal user, @PathVariable String fileDriveId) {
+        String email = OAuth2PrincipalUtil.getAttributes(user, "email");
+        System.out.println("Deleting file: " + fileDriveId + " " + email);
+        deletionService.deleteFile(fileDriveId, email);
+        return ResponseEntity.status(HttpStatusCodes.STATUS_CODE_OK).body("Deleted successfully");
+    }
+
+    @GetMapping("/{folderId}")
     public ResponseEntity<List<String>> getAllFilesByFolderId(@PathVariable String folderId) {
         System.out.println("Reached controller for folderId: " + folderId);
         try {
