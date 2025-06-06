@@ -2,13 +2,20 @@ package com.ashupre.whatsappparser.config;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+
+import java.util.Objects;
 
 @Configuration
+@RequiredArgsConstructor
 public class EnvConfig {
 
-    private final Dotenv dotenv = Dotenv.load();
+    private final Environment environment;
+
+    private Dotenv dotenv;
 
     /**
      * loading environment variables & also manually setting oauth credentials
@@ -20,13 +27,32 @@ public class EnvConfig {
      */
     @PostConstruct
     public void loadEnvVariables() {
-        // these lines must be present in application.properties
-        // spring.security.oauth2.client.registration.google.client-id=${GOOGLE_CLIENT_ID}
-        // spring.security.oauth2.client.registration.google.client-secret=${GOOGLE_CLIENT_SECRET}
-        System.setProperty("GOOGLE_CLIENT_ID", dotenv.get("GOOGLE_CLIENT_ID"));
-        System.setProperty("GOOGLE_CLIENT_SECRET", dotenv.get("GOOGLE_CLIENT_SECRET"));
-        System.setProperty("MONGO_URI", dotenv.get("MONGO_URI"));
-        System.setProperty("GOOGLE_REDIRECT_URL", dotenv.get("GOOGLE_REDIRECT_URL"));
+        String[] profiles = environment.getActiveProfiles();
+        String profile = profiles.length > 0 ? profiles[0] : "default";
+        String fileName = Objects.equals(profile, "default") ? ".env" : ".env." + profile;
+        System.out.println("Active Profile: " + profile);
+
+        dotenv = Dotenv.configure()
+                .filename(fileName)
+                .ignoreIfMissing()
+                .load();
+
+        // setting the values for spring to pick them up via ${VAR_NAME} [in application.properties]
+        setEnvVar("GOOGLE_CLIENT_ID", dotenv);
+        setEnvVar("GOOGLE_CLIENT_SECRET", dotenv);
+        setEnvVar("MONGO_URI", dotenv);
+        setEnvVar("GOOGLE_REDIRECT_URL", dotenv);
+        setEnvVar("AES_SECRET_KEY", dotenv);
+        setEnvVar("AES_IV", dotenv);
+        setEnvVar("JWT_SECRET", dotenv);
+    }
+
+    private void setEnvVar(String key, Dotenv dotenv) {
+        String value = dotenv.get(key);
+        System.out.println("Env variable: " + key + " = " + value);
+        if (value != null) {
+            System.setProperty(key, value);
+        }
     }
 
     @Bean
@@ -39,15 +65,6 @@ public class EnvConfig {
         return dotenv.get("GOOGLE_DRIVE_FOLDER_ID");
     }
 
-    /**
-     * key and iv must be present in .env, generate using
-     *
-     * -> Generate a 256-bit (32-byte) key
-     * $ openssl rand -base64 32
-     *
-     * -> Generate a 128-bit (16-byte) IV
-     * $ openssl rand -base64 16
-     */
     @Bean
     public String secretKey() {
         return dotenv.get("AES_SECRET_KEY");
@@ -62,5 +79,4 @@ public class EnvConfig {
     public String jwtSecret() {
         return dotenv.get("JWT_SECRET");
     }
-
 }

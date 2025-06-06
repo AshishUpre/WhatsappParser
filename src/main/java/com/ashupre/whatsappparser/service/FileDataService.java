@@ -42,6 +42,10 @@ public class FileDataService {
         fileDataRepository.save(fileData);
     }
 
+    public void deleteFileByDriveId(String fileDriveId) {
+        fileDataRepository.deleteFileDataByGdriveId(fileDriveId);
+    }
+
     // returns name and encrypted mongo id of all files of a user
     public List<Pair<String, String>> getAllFilesOfUser(String userId) {
         Query query = new Query();

@@ -9,10 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +43,34 @@ public class UserService {
             throw new RuntimeException("User not found");
         }
         return user.get();
+    }
+
+    public void deleteFileByDriveId(String userEmail, String driveId) {
+        User user = userRepository.findByEmail(userEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        // understand - difference between failing fast (by throwing NPE) and handling nulls
+        // here userFiles being null is valid (not a bug) --- happens when user has no files
+        // so we have to handle that
+        /**
+         * Behavior	Without Graceful Handling	-------------------- With Graceful Handling (Optional.ofNullable)
+         * getFiles() returns null	NullPointerException	---------------  Treated as empty list ✅
+         * You loop over it	Crashes app  --------------	Simply skips loop (nothing to do)
+         * You filter/map on it	Crashes app ----------------	Works fine — stream on empty list
+         * You conditionally check	Need to write if != null checks	------------------ No need — safe to use
+         */
+        List<User.FileMetadata> userFiles = Optional.ofNullable(user.getFiles())
+                .orElse(Collections.emptyList());
+
+        List<User.FileMetadata> updatedFiles = userFiles.stream().filter(
+                        fileMetadata -> !fileMetadata.driveId().equals(driveId)
+                ).toList();
+
+        if (userFiles.size() == updatedFiles.size()) {
+            throw new IllegalArgumentException("User doesn't have file with given drive id");
+        }
+
+        user.setFiles(updatedFiles);
+        userRepository.save(user);
     }
 
     // Get a user by ID

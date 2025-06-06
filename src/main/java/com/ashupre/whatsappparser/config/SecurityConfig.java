@@ -75,27 +75,6 @@ public class SecurityConfig {
                         // explicit redirect to /callback as present on same ec2
                         String redirectUrl = ec2Url + "/callback";
                         response.sendRedirect(redirectUrl);
-                        // Try to get the origin from the Origin header
-//                        String origin = request.getHeader("Origin");
-//
-//                        // If Origin is null, try using the Referer header
-//                        if (origin == null) {
-//                            origin = request.getHeader("Referer");
-//                            System.out.println("Using Referer: " + origin);
-//                        }
-//
-//                        // If both Origin and Referer are null, construct it from the Host header
-//                        if (origin == null) {
-//                            String scheme = request.isSecure() ? "https://" : "http://";
-//                            origin = scheme + request.getHeader("Host");
-//                            System.out.println("Using Host header: " + origin);
-//                        }
-//
-//                        // slash already there at the end of referer
-//                        String redirect = origin + "callback";
-//                        System.out.println("redirect: " + redirect);
-//
-//                        response.sendRedirect(redirect);
                     });
                 })
                 .logout(httpSecurityLogoutConfigurer -> {
