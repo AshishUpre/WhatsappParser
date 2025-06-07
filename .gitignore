@@ -2,6 +2,7 @@ WPkeypair.pem
 .env
 .env.*
 
+.git
 def
 src/main/resources/credentials.json
 **/**/*.env.json
