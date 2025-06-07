@@ -45,5 +45,5 @@ Contains utility classes for different functionalities.
 ![](.github/cloc.png)
 
 # Thanks
-[Genuine coder](https://www.youtube.com/@GenuineCoder) - Great for learning spring, also features some other stuff.
-
+- [Genuine coder](https://www.youtube.com/@GenuineCoder) - Great for learning spring, also features some other stuff.
+- [cloc util](https://github.com/AlDanial/cloc) - Used in this file to Count Lines Of Code
