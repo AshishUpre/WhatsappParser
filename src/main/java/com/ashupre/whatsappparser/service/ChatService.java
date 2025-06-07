@@ -10,6 +10,7 @@ import com.ashupre.whatsappparser.util.TimeFormatUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -34,6 +35,7 @@ import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatService {
 
     private final DateTimeFormatter inputFormatter;
@@ -118,7 +120,7 @@ public class ChatService {
 
 
     public void writeLogsToDB(List<ChatEntry> logEntries, String userId, String fileDriveId) {
-        System.out.println(" ====================================================================================== ");
+        log.debug(" ====================================================================================== ");
         List<Chat> chatList;
         // parallelize if many chats
         if (logEntries.size() > 500) {
@@ -163,10 +165,10 @@ public class ChatService {
         Query query = new Query();
         query.addCriteria(Criteria.where("userId").is(userId));
         query.addCriteria(Criteria.where("fileDriveId").is(fileId));
-        System.out.println("reached here in getPaginatedChats");
+        log.debug("reached here in getPaginatedChats");
 
         if (prevCursor != null) {
-            System.out.println("prev cursor not null");
+            log.debug("prev cursor not null");
             Criteria paginationCriteria = new Criteria().orOperator(
                     Criteria.where("timestamp").lt(prevCursor.getTimestamp()),
                     Criteria.where("timestamp").is(prevCursor.getTimestamp()).and("_id").lt(prevCursor.getId())

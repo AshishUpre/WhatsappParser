@@ -4,6 +4,7 @@ import com.ashupre.whatsappparser.exceptions.UserNotFoundException;
 import com.ashupre.whatsappparser.model.User;
 import com.ashupre.whatsappparser.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,14 +14,15 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
 
     @Transactional
     public void addFile(String userId, String fileName, String driveId) {
-        System.out.println("\n in add file received file id: " + driveId);
-        System.out.println("user id: " + userId);
+        log.debug("\n in add file received file id: {}", driveId);
+        log.debug("user id: {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
 
         if (user.getFiles() == null) {
