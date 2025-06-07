@@ -3,6 +3,7 @@ package com.ashupre.whatsappparser.service;
 import com.ashupre.whatsappparser.model.User;
 import com.ashupre.whatsappparser.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -19,14 +20,15 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
-
+    
     private final UserRepository userRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        System.out.println(" =================================== about to load user ===============================" +
+        log.debug(" =================================== about to load user ===============================" +
                 "============ ");
 
         Map<String, Object> attributes = oAuth2User.getAttributes();
@@ -46,11 +48,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .profilePic(profilePic)
                         .build()
                 );
-        System.out.println("user got from db : " + user);
+        log.debug("user got from db : {}", user);
 
         // save (mongodb save method will insert if new, or update if exists)
        User savedUser = userRepository.save(user);
-        System.out.println("Saved user: " + savedUser);
+        log.debug("Saved user: {}", savedUser);
         return new DefaultOAuth2User(
                 oAuth2User.getAuthorities(),
                 attributes,

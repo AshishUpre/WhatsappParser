@@ -4,6 +4,7 @@ import com.ashupre.whatsappparser.service.CustomOAuth2UserService;
 import jakarta.servlet.http.HttpSessionEvent;
 import jakarta.servlet.http.HttpSessionListener;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -25,6 +26,7 @@ import java.util.List;
 @EnableWebSecurity
 @RequiredArgsConstructor
 @DependsOn("envConfig")
+@Slf4j
 public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
@@ -70,7 +72,7 @@ public class SecurityConfig {
                     });
                     // after auth it goes to /callback which will do some stuff and send to /dashboard
                     oauth2Login.successHandler((request, response, authentication) -> {
-                        System.out.println("success handler reached SUCCESS REQUEST ========================================= ");
+                        log.info("success handler reached SUCCESS REQUEST ========================================= ");
 
                         // explicit redirect to /callback as present on same ec2
                         String redirectUrl = ec2Url + "/callback";
@@ -97,12 +99,12 @@ public class SecurityConfig {
         return new HttpSessionListener() {
             @Override
             public void sessionCreated(HttpSessionEvent se) {
-                System.out.println("\n ======================== Session Created: " + se.getSession().getId());
+                log.info("\n ======================== Session Created: {}", se.getSession().getId());
             }
 
             @Override
             public void sessionDestroyed(HttpSessionEvent se) {
-                System.out.println("Session Destroyed: " + se.getSession().getId());
+                log.info("Session Destroyed: {}", se.getSession().getId());
             }
         };
     }

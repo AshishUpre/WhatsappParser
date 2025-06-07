@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
 
     private final UserService userService;
@@ -40,11 +42,11 @@ public class UserController {
     public ResponseEntity<UserDTO> getUser(Principal user, Authentication authentication, HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) {
-            System.out.println("session is null in user controller");
+            log.info("session is null in user controller");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
         if (authentication == null || !authentication.isAuthenticated()) {
-            System.out.println("authentication / not authenticated is null in user controller");
+            log.info("authentication / not authenticated is null in user controller");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
         return ResponseEntity.ok(new UserDTO(user));
@@ -71,8 +73,8 @@ public class UserController {
 
     @GetMapping("/files")
     public ResponseEntity<List<Pair<String, String>>> getAllFilesOfUser(HttpServletRequest request, Principal user) {
-        System.out.println("reached user controller, get all files of user");
-        System.out.println("request: " + Arrays.toString(Arrays.stream(request.getCookies()).toArray()));
+        log.info("reached user controller, get all files of user");
+        log.info("request: " + Arrays.toString(Arrays.stream(request.getCookies()).toArray()));
 
         // note: sub only applicable to google
         String providerId = OAuth2PrincipalUtil.getAttributes(user,"sub");

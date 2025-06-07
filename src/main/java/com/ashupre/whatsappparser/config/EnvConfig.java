@@ -3,6 +3,7 @@ package com.ashupre.whatsappparser.config;
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -11,6 +12,7 @@ import java.util.Objects;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class EnvConfig {
 
     private final Environment environment;
@@ -49,7 +51,7 @@ public class EnvConfig {
 
     private void setEnvVar(String key, Dotenv dotenv) {
         String value = dotenv.get(key);
-        System.out.println("Env variable: " + key + " = " + value);
+        log.debug("Env variable: " + key + " = " + value);
         if (value != null) {
             System.setProperty(key, value);
         }

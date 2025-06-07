@@ -14,11 +14,13 @@ import lombok.RequiredArgsConstructor;
 import java.security.Principal;
 import java.util.Base64;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/chats")
+@Slf4j
 public class ChatController {
 
     private final ChatService chatService;
@@ -33,7 +35,7 @@ public class ChatController {
     public ChatResponsePaginated getPaginatedChats(@PathVariable String fileDriveId, @PathVariable String cursor,
                                                    Principal user) throws JsonProcessingException {
         ChatCursor prevCursor;
-        System.out.println("cursor: " + cursor);
+        log.debug("cursor: " + cursor);
         String userId = userRepository.findByProviderId(
                         OAuth2PrincipalUtil.getAttributes(user, "sub")
                 ).orElseThrow(() -> new UserNotFoundException("User not found")).getId();
@@ -50,7 +52,7 @@ public class ChatController {
 
         response.setCursor(aesUtil.encrypt(response.getCursor()));
         response.setCursor(Base64.getUrlEncoder().encodeToString(response.getCursor().getBytes()));
-        System.out.println("sending cursor as : " + response.getCursor());
+        log.debug("sending cursor as : {}", response.getCursor());
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
