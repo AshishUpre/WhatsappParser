@@ -1,6 +1,7 @@
 WPkeypair.pem
 .env
 .env.*
+Dummy_chat.txt
 
 .git
 def
@@ -8,6 +9,7 @@ src/main/resources/credentials.json
 **/**/*.env.json
 HELP.md
 deprecated
+**/target/**
 .gradle
 build/
 gradle/
