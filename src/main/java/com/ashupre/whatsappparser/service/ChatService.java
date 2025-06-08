@@ -8,6 +8,7 @@ import com.ashupre.whatsappparser.model.Chat;
 import com.ashupre.whatsappparser.model.ChatEntry;
 import com.ashupre.whatsappparser.repository.ChatRepository;
 import com.ashupre.whatsappparser.util.TimeFormatUtil;
+import com.ashupre.whatsappparser.util.TimerUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -152,23 +153,16 @@ public class ChatService {
         }
 
         if (!chatList.isEmpty()) {
-            saveChatsToDbAsync(chatList);
+            // reverse it so that the most recent messages will have chance to be inserted first, such that as the
+            // user scrolls, even if all the chats were not inserted, the most recent ones will have a high chance
+            // of already being inserted.
+            chatList = chatList.reversed();
+            TimerUtil.logAsyncTime("Inserting chats into DB", saveChatsToDbAsync(chatList));
         }
     }
 
-//    private CompletableFuture<Void> saveChatsToDbAsync(List<Chat> chatList) {
-//        int insCount = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, Chat.class)
-//                .insert(chatList)
-//                .execute()
-//                .getInsertedCount();
-//        if (insCount != chatList.size()) {
-//            System.out.println("DB fucked up ********************************** ");
-//        }
-//        return CompletableFuture.completedFuture(null);
-//    }
-
     private CompletableFuture<Void> saveChatsToDbAsync(List<Chat> chatList) {
-        int batchSize = 100;
+        int batchSize = 500;
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         AtomicInteger totalInserted = new AtomicInteger(0);
 
