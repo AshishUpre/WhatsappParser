@@ -1,0 +1,8 @@
+### GET request to example server
+GET http://localhost:8080/actuator/metrics
+
+###
+GET localhost:8080/actuator/metrics/mongodb.driver.pool.checkedout
+
+###
+GET localhost:8080/actuator/metrics/mongodb.driver.pool.size

@@ -13,21 +13,17 @@ public class User {
 
     @Id
     private String id;
+    private String email;
     private String name;
     // the oauth provider e.g., "google", "github"
-    private String provider;
+    private String oAuthProvider;
     // id of user  from oauth provider
-    private String providerId;
-    private String email;
+    private String oAuthProviderUserId;
     private String profilePic;
     private List<FileMetadata> files;
 
-    public record FileMetadata (String fileName,
-                                String driveId, // References uploaded files
-                                String fileId) {}
-
-    public boolean hasFileDriveId(String driveId) {
-        return files != null && files.stream().anyMatch(file -> file.driveId().equals(driveId));
+    public boolean hasFileId(String fileId) {
+        return files != null && files.stream().anyMatch(file -> file.fileId().equals(fileId));
     }
 
 }

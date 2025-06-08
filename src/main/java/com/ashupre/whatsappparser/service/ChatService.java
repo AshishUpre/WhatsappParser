@@ -16,7 +16,6 @@ import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.mongodb.core.query.Query;
@@ -30,6 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,17 +47,18 @@ public class ChatService {
     private final ObjectMapper jacksonMapper;
 
     private final ChatRepository chatRepository;
+    private final ZoneId asiaKolkataZoneId;
 
     /**
      * No need to create a mongoTemplate, springboot will automatically create a mongoTemplate for us using
      * the uri given in application.properties, we simply inject it
-     *
-     *  = new MongoTemplate(
-     *             new SimpleMongoClientDatabaseFactory(MongoClients.create("mongodb://localhost:27017"),
-     *                     "whatsapp_parser")
-     *     );
+     * <p>
+     * = new MongoTemplate(
+     * new SimpleMongoClientDatabaseFactory(MongoClients.create("mongodb://localhost:27017"),
+     * "whatsapp_parser")
+     * );
      */
-    public ResponseEntity<String> addChatsFromFile(MultipartFile file, String userId, String fileDriveId) {
+    public ResponseEntity<String> addChatsFromFile(MultipartFile file, String userId, String fileId) {
         List<ChatEntry> logEntries = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
@@ -67,10 +68,10 @@ public class ChatService {
             StringBuilder messageBuilder = new StringBuilder();
 
             Pattern messagePattern = Pattern.compile(
-                     // * \h? instead of a space before [ap]m
-                     // * This allows for either a normal space or a non-breaking space (newer exports have small
-                     // * gap between that is not a space -> non-breaking space).
-                     // * similarly for beside -
+                    // * \h? instead of a space before [ap]m
+                    // * This allows for either a normal space or a non-breaking space (newer exports have small
+                    // * gap between that is not a space -> non-breaking space).
+                    // * similarly for beside -
                     "^(\\d{2}/\\d{2}/\\d{2}, \\d{1,2}:\\d{2}[\\h]?[ap]m)[\\h]-[\\h](.*?):\\s(.*)$"
             );
             while ((line = reader.readLine()) != null) {
@@ -114,12 +115,12 @@ public class ChatService {
             return ResponseEntity.status(500).body("Failed to read file: " + e.getMessage());
         }
 
-        writeLogsToDB(logEntries, userId, fileDriveId);
+        writeLogsToDB(logEntries, userId, fileId);
         return ResponseEntity.ok("added successfully");
     }
 
 
-    public void writeLogsToDB(List<ChatEntry> logEntries, String userId, String fileDriveId) {
+    public void writeLogsToDB(List<ChatEntry> logEntries, String userId, String fileId) {
         log.debug(" ====================================================================================== ");
         List<Chat> chatList;
         // parallelize if many chats
@@ -131,10 +132,10 @@ public class ChatService {
                                     .userId(userId)
                                     .sender(entry.name())
                                     // convert timestamp to utc before storing in db
-                                    .timestamp(TimeFormatUtil.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")))
-                                    .fileDriveId(fileDriveId)
+                                    .timestamp(TimeFormatUtil.localToUTC(entry.timestamp(), asiaKolkataZoneId))
+                                    .fileDbId(fileId)
                                     .build()
-            ).toList();
+                    ).toList();
         } else {
             chatList = logEntries.stream().map(
                     entry -> Chat.builder()
@@ -142,8 +143,8 @@ public class ChatService {
                             .userId(userId)
                             .sender(entry.name())
                             // convert timestamp to utc before storing in db
-                            .timestamp(TimeFormatUtil.localToUTC(entry.timestamp(), ZoneId.of("Asia/Kolkata")))
-                            .fileDriveId(fileDriveId)
+                            .timestamp(TimeFormatUtil.localToUTC(entry.timestamp(), asiaKolkataZoneId))
+                            .fileDbId(fileId)
                             .build()
             ).toList();
         }
@@ -153,18 +154,46 @@ public class ChatService {
         }
     }
 
-    @Async
-    protected CompletableFuture<Void> saveChatsToDbAsync(List<Chat> chatList) {
-        mongoTemplate.bulkOps(BulkOperations.BulkMode.ORDERED, Chat.class)
-                .insert(chatList)
-                .execute();
-        return CompletableFuture.completedFuture(null);
+//    private CompletableFuture<Void> saveChatsToDbAsync(List<Chat> chatList) {
+//        int insCount = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, Chat.class)
+//                .insert(chatList)
+//                .execute()
+//                .getInsertedCount();
+//        if (insCount != chatList.size()) {
+//            System.out.println("DB fucked up ********************************** ");
+//        }
+//        return CompletableFuture.completedFuture(null);
+//    }
+
+    private CompletableFuture<Void> saveChatsToDbAsync(List<Chat> chatList) {
+        int batchSize = 100;
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        AtomicInteger totalInserted = new AtomicInteger(0);
+
+        for (int i = 0; i < chatList.size(); i += batchSize) {
+            List<Chat> batch = chatList.subList(i, Math.min(i + batchSize, chatList.size()));
+            futures.add(CompletableFuture.runAsync(() -> {
+                int insertedCount = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, Chat.class)
+                        .insert(batch).execute().getInsertedCount();
+                totalInserted.addAndGet(insertedCount);
+            }));
+        }
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .thenRun(() -> {
+                    if (totalInserted.get() != chatList.size()) {
+                        System.err.println("NOT ALL INSERTED! ***************  " + totalInserted.get() + " out of " + chatList.size());
+                    } else {
+                        System.out.println("All chats saved successfully.");
+                    }
+                });
     }
 
-    public ChatResponsePaginated getPaginatedChats (String userId, String fileId, ChatCursor prevCursor) {
+
+    public ChatResponsePaginated getPaginatedChats(String userId, String fileId, ChatCursor prevCursor) {
         Query query = new Query();
         query.addCriteria(Criteria.where("userId").is(userId));
-        query.addCriteria(Criteria.where("fileDriveId").is(fileId));
+        query.addCriteria(Criteria.where("fileDbId").is(fileId));
         log.debug("reached here in getPaginatedChats");
 
         if (prevCursor != null) {
@@ -206,13 +235,13 @@ public class ChatService {
                                 chat.getSender(),
                                 chat.getMessage(),
                                 // convert back to local after getting from DB, format as like in chat export text file
-                                TimeFormatUtil.utcToLocal(chat.getTimestamp(), ZoneId.of("Asia/Kolkata"))
+                                TimeFormatUtil.utcToLocal(chat.getTimestamp(), asiaKolkataZoneId)
                                         .format(outputFormatter)
                         )
                 ).toList();
     }
 
-    public void deleteChats(String fileDriveId) {
-        chatRepository.deleteChatsByFileDriveId(fileDriveId);
+    public void deleteChats(String fileId) {
+        chatRepository.deleteChatsByFileDbId(fileId);
     }
 }

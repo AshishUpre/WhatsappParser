@@ -13,16 +13,16 @@ public class TransactionalDeletionService {
     private final FileDataService fileDataService;
 
     /**
-     * Deletes everything corresponding to a fileDriveId.
+     * Deletes everything corresponding to a fileId.
      * transactional to roll back all the db operations in case of failures.
      */
     @Transactional
-    public void deleteFile(String fileDriveId, String email) {
+    public void deleteFile(String fileId, String email) {
         // first delete the file from user document
-        userService.deleteFileByDriveId(email, fileDriveId);
+        userService.deleteFileById(email, fileId);
         // then delete all chats corresponding to that file
-        chatService.deleteChats(fileDriveId);
+        chatService.deleteChats(fileId);
         // then delete the file from db
-        fileDataService.deleteFileByDriveId(fileDriveId);
+        fileDataService.deleteFileById(fileId);
     }
 }

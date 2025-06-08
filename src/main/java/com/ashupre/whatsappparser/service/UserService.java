@@ -1,8 +1,10 @@
 package com.ashupre.whatsappparser.service;
 
 import com.ashupre.whatsappparser.exceptions.UserNotFoundException;
+import com.ashupre.whatsappparser.model.FileMetadata;
 import com.ashupre.whatsappparser.model.User;
 import com.ashupre.whatsappparser.repository.UserRepository;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,8 +22,8 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
-    public void addFile(String userId, String fileName, String driveId) {
-        log.debug("\n in add file received file id: {}", driveId);
+    public void addFile(String userId, String fileName, String fileId) {
+        log.debug("\n in add file received file id: {}", fileId);
         log.debug("user id: {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
 
@@ -29,9 +31,9 @@ public class UserService {
             user.setFiles(new ArrayList<>());
         }
 
-        if (!user.hasFileDriveId(driveId)) {
-            List<User.FileMetadata> files = user.getFiles();
-            files.add(new User.FileMetadata(fileName, driveId, null));
+        if (!user.hasFileId(fileId)) {
+            List<FileMetadata> files = user.getFiles();
+            files.add(new FileMetadata(fileName, fileId));
             user.setFiles(files);
         }
 
@@ -47,9 +49,9 @@ public class UserService {
         return user.get();
     }
 
-    public void deleteFileByDriveId(String userEmail, String driveId) {
+    public void deleteFileById(String userEmail, String fileId) {
         User user = userRepository.findByEmail(userEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
-
+        log.debug("user in deletefilebyid ----------- {}", user);
         // understand - difference between failing fast (by throwing NPE) and handling nulls
         // here userFiles being null is valid (not a bug) --- happens when user has no files
         // so we have to handle that
@@ -60,19 +62,24 @@ public class UserService {
          * You filter/map on it	Crashes app ----------------	Works fine — stream on empty list
          * You conditionally check	Need to write if != null checks	------------------ No need — safe to use
          */
-        List<User.FileMetadata> userFiles = Optional.ofNullable(user.getFiles())
+        List<FileMetadata> userFiles = Optional.ofNullable(user.getFiles())
                 .orElse(Collections.emptyList());
 
-        List<User.FileMetadata> updatedFiles = userFiles.stream().filter(
-                        fileMetadata -> !fileMetadata.driveId().equals(driveId)
+        List<FileMetadata> updatedFiles = userFiles.stream().filter(
+                        fileMetadata ->
+                            fileMetadata.fileId() != null && !fileMetadata.fileId().equals(fileId)
                 ).toList();
 
         if (userFiles.size() == updatedFiles.size()) {
-            throw new IllegalArgumentException("User doesn't have file with given drive id");
+            throw new IllegalArgumentException("User doesn't have file with given file id - " + fileId);
         }
 
         user.setFiles(updatedFiles);
         userRepository.save(user);
+    }
+
+    public Optional<User> findByOAuthProviderUserId(@NonNull String providerUserId) {
+        return userRepository.findByoAuthProviderUserId(providerUserId);
     }
 
     // Get a user by ID

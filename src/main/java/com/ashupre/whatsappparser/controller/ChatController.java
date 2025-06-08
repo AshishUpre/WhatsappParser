@@ -31,12 +31,12 @@ public class ChatController {
 
     private final UserRepository userRepository;
 
-    @GetMapping("/{fileDriveId}/cursor={cursor}")
-    public ChatResponsePaginated getPaginatedChats(@PathVariable String fileDriveId, @PathVariable String cursor,
+    @GetMapping("/{fileId}/cursor={cursor}")
+    public ChatResponsePaginated getPaginatedChats(@PathVariable String fileId, @PathVariable String cursor,
                                                    Principal user) throws JsonProcessingException {
         ChatCursor prevCursor;
         log.debug("cursor: " + cursor);
-        String userId = userRepository.findByProviderId(
+        String userId = userRepository.findByoAuthProviderUserId(
                         OAuth2PrincipalUtil.getAttributes(user, "sub")
                 ).orElseThrow(() -> new UserNotFoundException("User not found")).getId();
 
@@ -48,7 +48,7 @@ public class ChatController {
             prevCursor = jacksonMapper.readValue(cursor, ChatCursor.class);
         }
 
-        ChatResponsePaginated response = chatService.getPaginatedChats(userId, fileDriveId, prevCursor);
+        ChatResponsePaginated response = chatService.getPaginatedChats(userId, fileId, prevCursor);
 
         response.setCursor(aesUtil.encrypt(response.getCursor()));
         response.setCursor(Base64.getUrlEncoder().encodeToString(response.getCursor().getBytes()));
