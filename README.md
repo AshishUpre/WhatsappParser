@@ -79,6 +79,24 @@ Goto mongosh (mongoshell) and initialize replica-set for the DB
         rs.initiate()
         rs.status() # verify that it initiated properly
 
+# Notes and stuff
+## Made chat inserts into DB parallel
+We were putting data into DB in bulk, using BulkOperations.BulkMode.ORDERED before but we don't need to actually put 
+them in ordered was, as later we will get them back based on timestamp. So can use UNORDERED way of inserting. The advantage
+of UNORDERED is that MongoDB can execute the operations in parallel. We are keeping track of the counts for number of chats
+inserted using AtomicInteger variable. We can throw an exception if total inserts is not equal to the total
+number of chats present. Then for the bulk operations too, we can put chunks instead of all at once. Those chunks can be inserted into DB
+in an async way. For this I'm using CompletableFuture.runAsync to put them as chunks into DB. All this sped up the 
+file upload considerably.
+
+### metrics
+- sequential inserts : each taking a good while, sometimes even hitting 13 seconds. Below figure shows sequential inserts and their time taken
+![](.github/metrics_chatIns_seq.png)
+- concurrent, with batch size as 1000 chats : straight up we see nearly 50% improvement on average. 
+![](.github/metrics_chatInsParallel_1000.png)
+- concurrent, with batch size as 100 chats : nearly similar to batch size as 1000 but this will be useful for more files as not every file will have 1000s of chats. Maybe this is not good as the app scales as the batch size is kinda small, I can try to look into that later if it causes issues and perhaps tune to a good middle-ground.
+![](.github/metrics_chatInsParallel_100.png)
+
 # Statistics
 ![](.github/cloc.png)
 
