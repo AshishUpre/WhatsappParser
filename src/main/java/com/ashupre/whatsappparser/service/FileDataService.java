@@ -10,6 +10,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -22,22 +24,35 @@ public class FileDataService {
 
     private final FileDataRepository fileDataRepository;
 
+    private final UserService userService;
+
+    private final ChatService chatService;
+
     private final MongoTemplate mongoTemplate;
 
     private final ZoneId asiaKolkataZoneId;
 
-    public FileData saveFileData(File file, String userId) {
+    private FileData saveFileMetaDataToDB(File file, String userId) {
         FileData fileData = FileData.builder().fileName(file.getName())
                 .userId(userId)
                 .size(file.getTotalSpace())
-                .uploadTime(
-                        TimeFormatUtil.localToUTC(
-                                        LocalDateTime.now(), asiaKolkataZoneId
-                                )
-                )
+                .uploadTime(TimeFormatUtil.localToUTC(LocalDateTime.now(), asiaKolkataZoneId))
                 .build();
 
         return fileDataRepository.save(fileData);
+    }
+
+    @Transactional
+    public void uploadFile(String email, MultipartFile file) {
+        String userId = userService.getUserByEmail(email).getId();
+
+        // file handling
+        // /tmp/filename absolute path for the file (get by convFile.getAbsolutePath())
+        File convFile = new File(System.getProperty("java.io.tmpdir") + "/" + file.getOriginalFilename());
+        FileData fileData = saveFileMetaDataToDB(convFile, userId);
+
+        userService.addFile(userId, convFile.getName(), fileData.getId());
+        chatService.addChatsFromFile(file, userId, fileData.getId());
     }
 
     public void deleteFileById(String fileId) {

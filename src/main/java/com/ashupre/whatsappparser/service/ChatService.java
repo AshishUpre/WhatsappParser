@@ -1,6 +1,7 @@
 package com.ashupre.whatsappparser.service;
 
 import com.ashupre.whatsappparser.dto.ChatDTO;
+import com.ashupre.whatsappparser.exceptions.ChatDeletionCountMismatchException;
 import com.ashupre.whatsappparser.model.ChatCursor;
 import com.ashupre.whatsappparser.dto.ChatResponsePaginated;
 import com.ashupre.whatsappparser.model.Chat;
@@ -17,6 +18,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -241,7 +243,13 @@ public class ChatService {
                 ).toList();
     }
 
+    @Transactional
     public void deleteChats(String fileId) {
-        chatRepository.deleteChatsByFileDbId(fileId);
+        long chatCount = chatRepository.countChatsByFileDbId(fileId);
+        long deleteCount = chatRepository.deleteChatsByFileDbId(fileId);
+        if (chatCount != deleteCount) {
+            throw new ChatDeletionCountMismatchException("Deletion count mismatch for file " + fileId + ": "
+                    + "Chat count - " + chatCount + " != " + deleteCount + " - deletion count");
+        }
     }
 }

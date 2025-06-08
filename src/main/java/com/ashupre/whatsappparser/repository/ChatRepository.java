@@ -3,10 +3,9 @@ package com.ashupre.whatsappparser.repository;
 import com.ashupre.whatsappparser.model.Chat;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import java.util.List;
-
 public interface ChatRepository extends MongoRepository<Chat, Long> {
 
-    void deleteChatsByFileDbId(String fileDbId);
+    long deleteChatsByFileDbId(String fileDbId);
 
+    long countChatsByFileDbId(String fileDbId);
 }

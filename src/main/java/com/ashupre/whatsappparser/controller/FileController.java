@@ -1,6 +1,5 @@
 package com.ashupre.whatsappparser.controller;
 
-import com.ashupre.whatsappparser.model.FileData;
 import com.ashupre.whatsappparser.service.*;
 import com.ashupre.whatsappparser.util.OAuth2PrincipalUtil;
 import com.google.api.client.http.HttpStatusCodes;
@@ -10,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.security.Principal;
 
 @RestController
@@ -32,16 +30,7 @@ public class FileController {
         String email = OAuth2PrincipalUtil.getAttributes(user, "email");
 
         log.info("got email: {}", email);
-        String userId = userService.getUserByEmail(email).getId();
-
-        // file handling
-        // /tmp/filename absolute path for the file (get by convFile.getAbsolutePath())
-        File convFile = new File(System.getProperty("java.io.tmpdir") + "/" + file.getOriginalFilename());
-
-        FileData fileData = fileDataService.saveFileData(convFile, userId);
-        userService.addFile(userId, convFile.getName(), fileData.getId());
-
-        chatService.addChatsFromFile(file, userId, fileData.getId());
+        fileDataService.uploadFile(email, file);
         return ResponseEntity.ok("File uploaded successfully");
     }
 

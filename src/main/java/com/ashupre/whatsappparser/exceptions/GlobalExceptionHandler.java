@@ -16,4 +16,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException ex) {
         return ResponseEntity.status(404).body(ex.getMessage());
     }
+
+    @ExceptionHandler(ChatDeletionCountMismatchException.class)
+    public ResponseEntity<String> handleChatDeletionCountMismatchException(ChatDeletionCountMismatchException ex) {
+        return ResponseEntity.status(500).body("Error while deleting chats : " + ex.getMessage());
+    }
 }
