@@ -1,17 +1,18 @@
 package com.ashupre.whatsappparser.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.ashupre.whatsappparser.util.OAuth2PrincipalUtil;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 
 import java.security.Principal;
-import java.util.Map;
+
+import static com.ashupre.whatsappparser.service.CustomOAuth2UserService.getProviderIdName;
 
 @Getter
 @NoArgsConstructor
 public class UserDTO {
+    private String providerName;
     private String providerId;
     private String name;
     private String givenName;
@@ -21,15 +22,22 @@ public class UserDTO {
     private String picture;
 
     public UserDTO(Principal user) {
-        if (user instanceof OAuth2AuthenticationToken token) {
-            Map<String, Object> attributes = token.getPrincipal().getAttributes();
-            this.providerId = (String) attributes.get("sub");
-            this.name = (String) attributes.get("name");
-            this.givenName = (String) attributes.get("given_name");
-            this.familyName = (String) attributes.get("family_name");
-            this.email = (String) attributes.get("email");
-            this.emailVerified = (Boolean) attributes.get("email_verified");
-            this.picture = (String) attributes.get("picture");
+        if (user instanceof OAuth2AuthenticationToken) {
+            String providerName = OAuth2PrincipalUtil.getAttributes(user, "provider");
+
+            this.providerName = providerName;
+            this.providerId   = OAuth2PrincipalUtil.getAttributes(user, getProviderIdName(providerName));
+            this.name         = OAuth2PrincipalUtil.getAttributes(user, "name");
+            this.givenName    = OAuth2PrincipalUtil.getAttributes(user, "given_name");
+            this.familyName   = OAuth2PrincipalUtil.getAttributes(user, "family_name");
+            this.email        = OAuth2PrincipalUtil.getAttributes(user, "email");
+            this.picture      = OAuth2PrincipalUtil.getAttributes(user, "picture");
+
+            Object emailVerifiedObj = ((OAuth2AuthenticationToken) user).getPrincipal().getAttributes().get("email_verified");
+            if (emailVerifiedObj instanceof Boolean) {
+                this.emailVerified = (Boolean) emailVerifiedObj;
+            }
         }
     }
+
 }

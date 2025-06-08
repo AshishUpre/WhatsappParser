@@ -21,7 +21,11 @@ public class Chat {
     private String message;
     private String fileName;
     private String fileDbId;
-    private String fileDriveId;
+
+    // tells us if the chat is text or something else, if not text, can get through reference to
+    private boolean isTextChat;
+    // to reference MediaMessageMetadata class
+    private String mediaMessageId;
 
     // NOTE: this index creation only happens when the application starts
     // => {if you delete chats collection and re-upload files, index will not be created}

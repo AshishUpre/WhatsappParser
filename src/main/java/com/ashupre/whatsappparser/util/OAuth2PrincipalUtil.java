@@ -7,7 +7,7 @@ import java.security.Principal;
 
 public class OAuth2PrincipalUtil {
 
-    public static String getAttributes(@NonNull Principal principal, String attributeName) {
+    public static String getAttributes(@NonNull Principal principal, @NonNull String attributeName) {
         if (principal instanceof OAuth2AuthenticationToken token) {
             return (String) token.getPrincipal().getAttributes().get(attributeName);
         }
