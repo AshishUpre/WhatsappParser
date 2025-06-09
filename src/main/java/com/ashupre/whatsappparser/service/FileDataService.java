@@ -4,16 +4,21 @@ import com.ashupre.whatsappparser.model.FileData;
 import com.ashupre.whatsappparser.repository.FileDataRepository;
 import com.ashupre.whatsappparser.util.TimeFormatUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.util.Pair;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -42,8 +47,8 @@ public class FileDataService {
         return fileDataRepository.save(fileData);
     }
 
-    @Transactional
-    public void uploadFile(String email, MultipartFile file) {
+    @Transactional(rollbackFor = IOException.class)
+    public ResponseEntity<String> uploadFile(String email, MultipartFile file) {
         String userId = userService.getUserByEmail(email).getId();
 
         // file handling
@@ -52,7 +57,7 @@ public class FileDataService {
         FileData fileData = saveFileMetaDataToDB(convFile, userId);
 
         userService.addFile(userId, convFile.getName(), fileData.getId());
-        chatService.addChatsFromFile(file, userId, fileData.getId());
+        return chatService.addChatsFromFile(file, userId, fileData.getId());
     }
 
     public void deleteFileById(String fileId) {

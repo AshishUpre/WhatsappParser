@@ -119,7 +119,7 @@ public class ChatService {
         }
 
         writeLogsToDB(logEntries, userId, fileId);
-        return ResponseEntity.ok("added successfully");
+        return ResponseEntity.ok("Upload successful");
     }
 
 
@@ -246,4 +246,15 @@ public class ChatService {
                     + "Chat count - " + chatCount + " != " + deleteCount + " - deletion count");
         }
     }
+
+    //    private CompletableFuture<Void> saveChatsToDbAsync(List<Chat> chatList) {Add commentMore actions
+    //        int insCount = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, Chat.class)
+    //                .insert(chatList)
+    //                .execute()
+    //                .getInsertedCount();
+    //        if (insCount != chatList.size()) {
+    //            System.out.println("DB messed up ********************************** ");
+    //        }
+    //        return CompletableFuture.completedFuture(null);
+    //    }
 }

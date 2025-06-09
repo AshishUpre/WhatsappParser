@@ -59,7 +59,7 @@ public class SecurityConfig {
                 // => dont make the session stateless so that user can stay logged in
                 //.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(registry -> registry
-                        .requestMatchers("/login","/api/user/logout").permitAll()
+                        .requestMatchers("/login","/api/user/logout", "/api/files/dummy").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> {
