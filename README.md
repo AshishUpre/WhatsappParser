@@ -97,6 +97,11 @@ file upload considerably.
 - concurrent, with batch size as 100 chats : nearly similar to batch size as 1000 but this will be useful for more files as not every file will have 1000s of chats. Maybe this is not good as the app scales as the batch size is kinda small, I can try to look into that later if it causes issues and perhaps tune to a good middle-ground.
 ![](.github/metrics_chatInsParallel_100.png)
 
+## Loose benchmarks 
+
+    $ apt-get install apache2-utils
+    $ ab -n 10000 -c 10 http://localhost:8080/actuator/metrics
+
 # Statistics
 ![](.github/cloc.png)
 

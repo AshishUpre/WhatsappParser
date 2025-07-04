@@ -4,7 +4,6 @@ WPkeypair.pem
 Dummy_chat.txt
 
 .git
-def
 src/main/resources/credentials.json
 **/**/*.env.json
 HELP.md

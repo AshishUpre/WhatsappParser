@@ -30,14 +30,10 @@ dependencies {
     // for metrics
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    // Google Drive API (v3)
-    implementation 'com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0'
 
     // Google Authentication Library (Required for Service Accounts)
     implementation 'com.google.auth:google-auth-library-oauth2-http:1.21.0'
@@ -48,23 +44,18 @@ dependencies {
     // Dotenv
     implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 
-    // Jackson for JSON stuff, Jackson  doesnt support Instant by default (we are converting cursor to JSON)
-    // so we need the second dependency
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
-
     // spring security documentation -> https://docs.spring.io/spring-security/reference/index.html
     implementation 'org.springframework.boot:spring-boot-starter-security'
-
-    implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '10.0.1'
 
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
     testImplementation 'org.springframework.security:spring-security-test'
 
-    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
-
     implementation 'org.springframework.session:spring-session-core'
+
+    // For lambda
+    implementation platform('software.amazon.awssdk:bom:2.25.16')
+    implementation 'software.amazon.awssdk:lambda'
 }
 
 tasks.named('test') {

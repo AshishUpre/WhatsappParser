@@ -59,7 +59,8 @@ public class SecurityConfig {
                 // => dont make the session stateless so that user can stay logged in
                 //.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(registry -> registry
-                        .requestMatchers("/login","/api/user/logout", "/api/files/dummy").permitAll()
+                        .requestMatchers("/login", "/api/user/logout", "/api/files/dummy"
+                                , "/actuator/**", "/curr/thread").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2Login -> {
@@ -87,9 +88,9 @@ public class SecurityConfig {
                             .deleteCookies("JSESSIONID")
                             .logoutUrl("/api/user/logout");
                 });
-                // .formLogin(Customizer.withDefaults()); // gives default form for login
-                // FOR JWT
-                // .addFilterBefore(new JwtAuthenticationFilter(aesUtil, jwtService ,userDetailsService), UsernamePasswordAuthenticationFilter.class);
+        // .formLogin(Customizer.withDefaults()); // gives default form for login
+        // FOR JWT
+        // .addFilterBefore(new JwtAuthenticationFilter(aesUtil, jwtService ,userDetailsService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

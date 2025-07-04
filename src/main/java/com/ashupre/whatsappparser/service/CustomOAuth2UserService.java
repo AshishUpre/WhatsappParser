@@ -14,19 +14,23 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+
 /**
  * CustomOAuth2UserService is a custom implementation of DefaultOAuth2UserService, responsible for handling
  * OAuth2 user authentication in a Spring Boot application. This service retrieves user details from an OAuth2
  * provider (such as Google or GitHub), processes the user information, and stores it in the database.
- *
+ * <p>
  * the
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
-    
+
     private final UserRepository userRepository;
+
+    private final EmailService emailService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -42,15 +46,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String profilePic = attributes.get("picture") != null ? attributes.get("picture").toString() : null;
 
         // save or update user DB - if we dont findByEmail save
-        User user = userRepository.findByEmail(email)
-                .orElse(User.builder()
-                        .oAuthProvider(provider)
-                        .oAuthProviderUserId(providerId)
-                        .email(email)
-                        .name(name)
-                        .profilePic(profilePic)
-                        .build()
-                );
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        User user = optionalUser.orElseGet(()
+                -> createNewUserAndSendWelcomeEmail(email, name, profilePic, provider, providerId));
         log.debug("user got from db : {}", user);
 
         // save (mongodb save method will insert if new, or update if exists)
@@ -63,6 +61,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 attributes,
                 "name"
         );
+    }
+
+    private User createNewUserAndSendWelcomeEmail(String email, String name, String profilePic,
+                                                  String provider, String providerId) {
+        System.out.println("New user detected, sending email through lambda, emailId = " + email);
+        emailService.sendWelcomeEmail(name, email);
+        return User.builder()
+                .oAuthProvider(provider)
+                .oAuthProviderUserId(providerId)
+                .email(email)
+                .name(name)
+                .profilePic(profilePic)
+                .build();
     }
 
     public static String getProviderIdName(@NonNull String provider) {
