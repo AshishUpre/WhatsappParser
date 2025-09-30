@@ -48,7 +48,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // save or update user DB - if we dont findByEmail save
         Optional<User> optionalUser = userRepository.findByEmail(email);
         User user = optionalUser.orElseGet(()
-                -> createNewUserAndSendWelcomeEmail(email, name, profilePic, provider, providerId));
+                -> createNewUser(email, name, profilePic, provider, providerId));
         log.debug("user got from db : {}", user);
 
         // save (mongodb save method will insert if new, or update if exists)
@@ -63,10 +63,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         );
     }
 
-    private User createNewUserAndSendWelcomeEmail(String email, String name, String profilePic,
+    private User createNewUser/*AndSendWelcomeEmail*/(String email, String name, String profilePic,
                                                   String provider, String providerId) {
         System.out.println("New user detected, sending email through lambda, emailId = " + email);
-        emailService.sendWelcomeEmail(name, email);
+//        emailService.sendWelcomeEmail(name, email);
         return User.builder()
                 .oAuthProvider(provider)
                 .oAuthProviderUserId(providerId)
@@ -76,6 +76,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .build();
     }
 
+    /**
+     * Returns what the providerId is called for different providers
+     */
     public static String getProviderIdName(@NonNull String provider) {
         return switch (provider) {
             case "google" -> "sub";

@@ -52,6 +52,10 @@ tolerance related stuff (Setting up locally is also simple anyways [have local s
 Have a separate local DB for local testing, as we are using transactions for mongodb, it will not work with "out of the box"
 local mongodb configuration - Hence added a replica set to local mongodb
 
+## Lambda
+Go here and enable Gmail API so that mails can be sent.
+https://console.developers.google.com/apis/api/gmail.googleapis.com/overview?project=<project id>
+
 #### procedure for adding replica-set locally
 Adding replica-set locally allowed me to use mongodb transactions. It also significantly sped-up file upload and deletion 
 in local-testing helping me test faster (apart from in code parallelization I did).

@@ -2,11 +2,11 @@ package com.ashupre.whatsappparser.controller;
 
 import com.ashupre.whatsappparser.service.*;
 import com.ashupre.whatsappparser.util.OAuth2PrincipalUtil;
-import com.google.api.client.http.HttpStatusCodes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,7 +37,7 @@ public class FileController {
     }
 
     @GetMapping("/dummy")
-    public ResponseEntity<InputStreamResource> dummy() throws IOException {
+    public ResponseEntity<InputStreamResource> getDummyFile() throws IOException {
         File file = new File("Dummy_chat.txt");
         String contentType = Files.probeContentType(file.toPath());
         InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
@@ -54,7 +54,7 @@ public class FileController {
         String email = OAuth2PrincipalUtil.getAttributes(user, "email");
         System.out.println("Deleting file: " + fileId + " " + email);
         deletionService.deleteFile(fileId, email);
-        return ResponseEntity.status(HttpStatusCodes.STATUS_CODE_OK).body("Deleted successfully");
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Deleted successfully");
     }
 
 }

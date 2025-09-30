@@ -37,7 +37,7 @@ public class UserDTO {
             if (emailVerifiedObj instanceof Boolean) {
                 this.emailVerified = (Boolean) emailVerifiedObj;
             }
-        }
+        } else throw new UnsupportedOperationException("Unsupported principal type: " + user.getClass().getName());
     }
 
 }

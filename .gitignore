@@ -2,11 +2,13 @@ WPkeypair.pem
 .env
 .env.*
 Dummy_chat.txt
+Lambda/*
 
 .git
 src/main/resources/credentials.json
 **/**/*.env.json
 HELP.md
+THEORY_STUFF.md
 deprecated
 **/target/**
 .gradle

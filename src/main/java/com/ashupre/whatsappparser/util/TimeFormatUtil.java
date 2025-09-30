@@ -4,7 +4,11 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-public class TimeFormatUtil {
+public final class TimeFormatUtil {
+
+    private TimeFormatUtil() {
+        throw new UnsupportedOperationException("Utility class, should not be initialized");
+    }
 
     // convert to utc before storing in db
     public static Instant localToUTC(LocalDateTime localTimestamp, ZoneId zoneId) {

@@ -1,0 +1,236 @@
+[33mcommit 1d4cb1fcbbce7abd2150b23c9fd7c3603c250f84[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Tue Sep 30 21:50:08 2025 +0530
+
+    test
+
+[33mcommit 5272c33ed25bb154538aac47ece2bbf7189be562[m[33m ([m[1;31morigin_wp/main[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sat Jul 5 03:31:21 2025 +0530
+
+    using virtual threads with a custom ThreadPoolExecutor for tomcat, added EmailService that invokes lambda in async way
+
+[33mcommit 9caee019f3195db4f32de0d1e1e67f7de6908414[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Mon Jun 9 23:49:32 2025 +0530
+
+    serving dummy file, quality of life improvements
+
+[33mcommit 26da72cd3ec78c2826648892affe05ee67321000[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Jun 8 22:30:43 2025 +0530
+
+    added a utility to measure and print time taken by async functions using CompletableFuture
+
+[33mcommit 590dc9ec8992dd25d209744458dd4d3c7fecc0d7[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Jun 8 21:39:49 2025 +0530
+
+    added notes in readme
+
+[33mcommit f7b7d1459f2993dc5a6e8b826d4ada307b310bdc[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Jun 8 19:39:48 2025 +0530
+
+    added dummy file generator code
+
+[33mcommit 07da0887d4933f691f943207269b085356aa001f[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Jun 8 19:05:23 2025 +0530
+
+    more robust db operations with proper transactions, clear separation of concern, local db setup with replica-set to support transactions in local db
+
+[33mcommit fd8fc9a80e6d979bb38f0a67c6d0a48f6496fd6d[m
+Merge: ca7d523 4d6f041
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Jun 8 06:52:53 2025 +0530
+
+    Merge pull request #3 from AshishUpre/deprecating_gdrive
+    
+    Purged googleDrive related stuff, improved db schema, parallelized ch…
+
+[33mcommit 4d6f041f9883536e8c46570d0faf81e4e90f4f96[m[33m ([m[1;31morigin/deprecating_gdrive[m[33m, [m[1;32mdeprecating_gdrive[m[33m)[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Jun 8 06:51:27 2025 +0530
+
+    Purged googleDrive related stuff, improved db schema, parallelized chats save to db highly increasing speed, added springboot actuator, generic oauth provider logic, schema to facilitate .zip with s3
+
+[33mcommit ca7d5239bd0003d552bfadfec3dc8ac7761edf26[m
+Merge: ace61ef 15e1c43
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Jun 8 02:04:05 2025 +0530
+
+    Merge pull request #2 from AshishUpre/jdk21
+    
+    jdk 21 migration, using slf4j logger using lombok instead of sout
+
+[33mcommit 15e1c4355772411da122c8f6edbc5f35d34f6ec6[m[33m ([m[1;31morigin/jdk21[m[33m)[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Jun 8 02:02:30 2025 +0530
+
+    jdk 21 migration, using slf4j logger using lombok instead of sout
+
+[33mcommit ace61ef8e12ebd87c30ea1959a8388e929274612[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sat Jun 7 22:52:38 2025 +0530
+
+    readme changes
+
+[33mcommit 0c366533b1f2e0cd68d65395d06a48b6b178b738[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sat Jun 7 20:09:20 2025 +0530
+
+    Added readme
+
+[33mcommit 72341f302505c935b0e8d0ec710b57eafe7a6604[m
+Merge: 16be57d 73edcd5
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sat Jun 7 02:31:02 2025 +0530
+
+    Merge pull request #1 from AshishUpre/dev
+    
+    Implemented file deletion, setup local environment for dev using spring profiles, refactor
+
+[33mcommit 73edcd5056d53f0fd2250e634fb8e08a539cc89e[m[33m ([m[1;31morigin/dev[m[33m)[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sat Jun 7 02:29:14 2025 +0530
+
+    Implemented file deletion, setup local environment for dev using spring profile, refactor
+
+[33mcommit 16be57dd1d6b6712ff5833b56f90518acfe670ea[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Fri Jun 6 23:09:59 2025 +0530
+
+    added local env file
+
+[33mcommit 0a949d5b705cc22fba7e030f6830f5cabc91d486[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Fri Jun 6 23:05:07 2025 +0530
+
+    using profiles - added application-local.properties
+
+[33mcommit f3a26abd6f9c13d023cebee57ab9ca4be8e1c450[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Fri Jun 6 22:58:47 2025 +0530
+
+    parallelizing chatEntry to chatList creation when many chats, renamed GoogleDriveController to FileController
+
+[33mcommit a4cd6689d5bfd7084317f46c0f36695c99b8a914[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Fri Jun 6 22:24:42 2025 +0530
+
+    Reduced amount of logging my changing logging level
+
+[33mcommit 4e98700fac2ac3678ee53ef7708d2737f182e884[m
+Author: AshishUpre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Wed May 14 23:37:35 2025 +0530
+
+    Added gzip compression making data sent smaller and faster
+
+[33mcommit 2cbddc05b3b65f7a036655f68d816df5a0e01dd1[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Mon May 5 22:30:43 2025 +0530
+
+    Minor change
+
+[33mcommit e3909c58e386ec97c596ee450ca3b7d4be9bb281[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sat Mar 15 22:33:24 2025 +0530
+
+    Removed un-necessary file
+
+[33mcommit 54c4a4341249d03f9e2acf90d58be08e277e7c6a[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Fri Mar 7 18:54:53 2025 +0530
+
+    removed logging from ChatService
+
+[33mcommit 29f7acb197a78ca9ea895ba22b3a2efece3a6ecb[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Fri Mar 7 03:53:42 2025 +0530
+
+    Working, deployed on EC2
+
+[33mcommit 4f7c2b1175a137d2464490fc6f5c28dd720e347f[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Mar 2 19:32:45 2025 +0530
+
+    removed redundant code
+
+[33mcommit 598371ecc2ecb43eb044ca80b265f735f28fbbcb[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Mar 2 05:00:13 2025 +0530
+
+    @MajorOverhaul - migration from JWT to OAuth2 social login
+
+[33mcommit 4111b26d0ff007bf8ae27828fdf83ff2736d9f30[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sat Mar 1 19:26:43 2025 +0530
+
+    Adding oauth2, about to remove jwt
+
+[33mcommit 548baec18f5ea6d208a1a8207cc2f1755f8c51e7[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Thu Feb 27 23:47:30 2025 +0530
+
+    Fixed bug -> regex not capturing newer versions of exports with small space before [ap]m, allowing logout without auth
+
+[33mcommit ed997dec65476ee1097c5e13f3d14aba81d3d431[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sun Feb 23 17:41:51 2025 +0530
+
+    Authentication using spring security and JWT + cookies
+
+[33mcommit 3de206fac9161432bf9cdb0753080f171e251cf6[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sat Feb 22 02:31:34 2025 +0530
+
+    bug fix : using url safe base64 encoding for cursor
+
+[33mcommit dd6cb5f2c6f8201f7dc6215e81d23b1b81cb91bb[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sat Feb 22 01:50:56 2025 +0530
+
+    Sending chats as DTO
+
+[33mcommit e32eb81dd8fd6d1a085385d7518900e93ef49e25[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Sat Feb 22 01:19:03 2025 +0530
+
+    Sending cursor to the caller as encrypted JSON string, other small fixes
+
+[33mcommit 96f96cff9bd47f0e35be7baeacd8b2bec8f8889b[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Fri Feb 21 00:10:25 2025 +0530
+
+    Added a crude API for paginated fetch of chats from DB
+
+[33mcommit 8017bbbd7e0df8170960be33666bb057f1102e83[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Thu Feb 20 22:35:40 2025 +0530
+
+    Storing chats (bulk write) in DB, with index
+
+[33mcommit 8d4e8d16670766077bbac8f0e8671ed12f2ed26d[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Wed Feb 19 22:56:00 2025 +0530
+
+    more comprehensive files in user model
+
+[33mcommit 009bf4a5407f0a1e74fb82ec03c87b065e861007[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Wed Feb 19 22:23:09 2025 +0530
+
+    Wrote function to parse whatsapp export text file, chat service, restructure
+
+[33mcommit d01602d46a280b12d00fed943258eb88b2ffc2e8[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Mon Feb 17 20:56:03 2025 +0530
+
+    Added logout route, Clearing cookies when logging out
+
+[33mcommit f7357f92cb19fe7cbd89d68c17037120d1f4106e[m
+Author: Ashish Upre <103640953+AshishUpre@users.noreply.github.com>
+Date:   Mon Feb 17 20:01:00 2025 +0530
+
+    Initial commit

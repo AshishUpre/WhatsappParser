@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -32,6 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,8 +52,13 @@ public class ChatService {
     private final ObjectMapper jacksonMapper;
 
     private final ChatRepository chatRepository;
+
     private final ZoneId asiaKolkataZoneId;
 
+    @Qualifier("taskExecutor")
+    private final Executor taskExecutor;
+
+    private final Pattern messagePattern;
     /**
      * No need to create a mongoTemplate, springboot will automatically create a mongoTemplate for us using
      * the uri given in application.properties, we simply inject it
@@ -70,13 +77,6 @@ public class ChatService {
             String timestamp = null;
             StringBuilder messageBuilder = new StringBuilder();
 
-            Pattern messagePattern = Pattern.compile(
-                    // * \h? instead of a space before [ap]m
-                    // * This allows for either a normal space or a non-breaking space (newer exports have small
-                    // * gap between that is not a space -> non-breaking space).
-                    // * similarly for beside -
-                    "^(\\d{2}/\\d{2}/\\d{2}, \\d{1,2}:\\d{2}[\\h]?[ap]m)[\\h]-[\\h](.*?):\\s(.*)$"
-            );
             while ((line = reader.readLine()) != null) {
                 Matcher matcher = messagePattern.matcher(line);
 
@@ -157,7 +157,7 @@ public class ChatService {
             // user scrolls, even if all the chats were not inserted, the most recent ones will have a high chance
             // of already being inserted.
             chatList = chatList.reversed();
-            TimerUtil.logAsyncTime("Inserting chats into DB", saveChatsToDbAsync(chatList));
+            TimerUtil.doOperationAndlogAsyncTime("Inserting chats into DB", saveChatsToDbAsync(chatList));
         }
     }
 
@@ -165,14 +165,16 @@ public class ChatService {
         int batchSize = 500;
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         AtomicInteger totalInserted = new AtomicInteger(0);
-
+        if (taskExecutor == null) {
+            System.out.println("over hai");
+        }
         for (int i = 0; i < chatList.size(); i += batchSize) {
             List<Chat> batch = chatList.subList(i, Math.min(i + batchSize, chatList.size()));
             futures.add(CompletableFuture.runAsync(() -> {
                 int insertedCount = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, Chat.class)
                         .insert(batch).execute().getInsertedCount();
                 totalInserted.addAndGet(insertedCount);
-            }));
+            }, taskExecutor));
         }
 
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
@@ -246,15 +248,4 @@ public class ChatService {
                     + "Chat count - " + chatCount + " != " + deleteCount + " - deletion count");
         }
     }
-
-    //    private CompletableFuture<Void> saveChatsToDbAsync(List<Chat> chatList) {Add commentMore actions
-    //        int insCount = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, Chat.class)
-    //                .insert(chatList)
-    //                .execute()
-    //                .getInsertedCount();
-    //        if (insCount != chatList.size()) {
-    //            System.out.println("DB messed up ********************************** ");
-    //        }
-    //        return CompletableFuture.completedFuture(null);
-    //    }
 }
